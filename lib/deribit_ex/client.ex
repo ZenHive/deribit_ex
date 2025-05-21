@@ -193,8 +193,10 @@ defmodule DeribitEx.DeribitClient do
           sync_interval = Keyword.get(time_sync_config, :sync_interval, 300_000)
 
           # Start time sync service
+          # Extract client_pid from conn if it's not already a pid
+          client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
           {:ok, _sync_pid} =
-            TimeSyncSupervisor.start_service(conn,
+            TimeSyncSupervisor.start_service(client_pid,
               sync_interval: sync_interval
             )
 
@@ -492,7 +494,7 @@ defmodule DeribitEx.DeribitClient do
       # Exchange token using a stored refresh token
       {:ok, response} = DeribitClient.exchange_token(conn, nil, 10)
   """
-  @spec exchange_token(pid(), String.t() | nil, integer() | String.t(), map() | nil) ::
+  @spec exchange_token(pid(), String.t() | nil, integer() | String.t() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
   def exchange_token(conn, refresh_token, subject_id, opts \\ nil) do
     start_time = System.monotonic_time()
@@ -547,7 +549,7 @@ defmodule DeribitEx.DeribitClient do
       # Fork token using a stored refresh token
       {:ok, response} = DeribitClient.fork_token(conn, nil, "analytics_session")
   """
-  @spec fork_token(pid(), String.t() | nil, String.t() | atom(), map() | nil) ::
+  @spec fork_token(pid(), String.t() | nil, String.t() | atom() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
   def fork_token(conn, refresh_token, session_name, opts \\ nil) do
     start_time = System.monotonic_time()
@@ -625,7 +627,7 @@ defmodule DeribitEx.DeribitClient do
       # Logout with custom timeout
       {:ok, conn} = DeribitClient.logout(conn, true, %{timeout: 30000})
   """
-  @spec logout(pid(), boolean(), map() | nil) :: {:ok, pid()} | {:error, any()} | :ok
+  @spec logout(pid(), boolean(), map() | nil) :: {:ok, pid()} | {:error, any()}
   def logout(conn, invalidate_token \\ true, opts \\ nil) do
     start_time = System.monotonic_time()
 
@@ -1138,6 +1140,7 @@ defmodule DeribitEx.DeribitClient do
     # Check if there's a time sync service for this connection
     # We need to extract the client pid from the conn structure if it's not already a pid
     client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
+    # Ensure we're passing a pid to service_name/1
     service_name = TimeSyncSupervisor.service_name(client_pid)
 
     if Process.whereis(service_name) do
@@ -1468,7 +1471,9 @@ defmodule DeribitEx.DeribitClient do
   defp maybe_initialize_time_sync(conn, config, results) do
     if config.time_sync_enabled do
       # Check if there's already a time sync service running for this client
-      service_name = TimeSyncSupervisor.service_name(conn)
+      # Extract the client pid from the conn structure if it's not already a pid
+      client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
+      service_name = TimeSyncSupervisor.service_name(client_pid)
 
       if Process.whereis(service_name) do
         # Time sync service is already running
@@ -1482,8 +1487,10 @@ defmodule DeribitEx.DeribitClient do
         time_sync_config = Application.get_env(:deribit_ex, :websocket, [])[:time_sync] || []
         sync_interval = Keyword.get(time_sync_config, :sync_interval, 300_000)
 
+        # Make sure we're passing a pid
+        client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
         {:ok, sync_pid} =
-          TimeSyncSupervisor.start_service(conn,
+          TimeSyncSupervisor.start_service(client_pid,
             sync_interval: sync_interval
           )
 

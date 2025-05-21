@@ -74,7 +74,7 @@ defmodule DeribitEx.TimeSyncSupervisor do
   ## Returns
     * The name of the TimeSyncService for the given client
   """
-  @spec service_name(pid()) :: atom()
+  @spec service_name(pid() | map() | any()) :: atom()
   def service_name(client_pid) do
     # We use a fixed name and register the client PIDs in a registry
     # to avoid atom table issues with long PID strings
