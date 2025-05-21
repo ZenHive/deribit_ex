@@ -11,10 +11,7 @@ defmodule DeribitEx.Adapter do
   alias WebsockexNova.Behaviors.AuthHandler
   alias WebsockexNova.Behaviors.ConnectionHandler
   alias WebsockexNova.Behaviors.SubscriptionHandler
-  alias WebsockexNova.Behaviors.FrameHandler
   alias WebsockexNova.Defaults.DefaultMessageHandler
-  
-  @behaviour WebsockexNova.Behaviors.FrameHandler
 
   require Logger
 
@@ -1186,7 +1183,7 @@ defmodule DeribitEx.Adapter do
 
   def handle_disable_heartbeat_response(_other, state), do: {:ok, state}
 
-  @impl WebsockexNova.Behaviors.FrameHandler
+  @impl ConnectionHandler
   @doc """
   Handles raw WebSocket frames from the Deribit API.
 
