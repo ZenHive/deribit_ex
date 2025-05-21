@@ -12,6 +12,7 @@ defmodule DeribitEx.Adapter do
   alias WebsockexNova.Behaviors.ConnectionHandler
   alias WebsockexNova.Behaviors.SubscriptionHandler
   alias WebsockexNova.Defaults.DefaultMessageHandler
+  alias WebsockexNova.Behaviors.FrameHandler
 
   require Logger
 
@@ -200,6 +201,9 @@ defmodule DeribitEx.Adapter do
 
       # Message
       message_handler: __MODULE__,
+      
+      # Frame Handling - explicitly register our module to handle frames
+      frame_handler: __MODULE__,
 
       # Error Handling
       error_handler: WebsockexNova.Defaults.DefaultErrorHandler,
@@ -609,8 +613,13 @@ defmodule DeribitEx.Adapter do
     {:needs_auth, message, state}
   end
 
+  def handle_message(%{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = message, state) do
+    # Auto-respond to test_request heartbeat messages from the server by sending a public/test RPC
+    handle_test_request(Map.get(message, "params", %{}), state)
+  end
+  
   def handle_message(%{"method" => "test_request", "params" => params}, state) do
-    # Auto-respond to test_request messages from the server by sending a public/test RPC
+    # Legacy handler for direct test_request messages (retained for backward compatibility)
     handle_test_request(params, state)
   end
 
@@ -1210,6 +1219,21 @@ defmodule DeribitEx.Adapter do
   end
 
   def handle_disable_heartbeat_response(_other, state), do: {:ok, state}
+
+  @impl FrameHandler
+  @doc """
+  Handles raw WebSocket frames from the Deribit API.
+
+  This function is called for each incoming WebSocket frame before JSON parsing.
+  Heartbeat handling is now done at the message level through handle_message 
+  for improved reliability.
+  """
+  @spec handle_frame(atom(), String.t(), map()) :: {:ok, map()}
+  def handle_frame(_frame_type, _frame_data, state) do
+    # Delegate all frame handling to the normal message processing flow
+    # Heartbeat test_request messages are handled in handle_message
+    {:ok, state}
+  end
 
   @doc """
   Generates data for the enable_cancel_on_disconnect operation.
