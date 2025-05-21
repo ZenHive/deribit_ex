@@ -1,0 +1,2 @@
+# The bootstrap tests are intentionally using exit(:normal) to end tests
+# These are expected to fail in the test suite

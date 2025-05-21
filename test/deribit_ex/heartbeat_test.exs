@@ -9,6 +9,122 @@ defmodule DeribitEx.HeartbeatTest do
     :ok
   end
 
+  describe "Adapter heartbeat message handling" do
+    test "handle_message processes regular heartbeat messages correctly" do
+      # Create a minimal state
+      state = %{heartbeat_enabled: true, heartbeat_interval: 30}
+      
+      # Create a heartbeat message from the server
+      message = %{
+        "method" => "heartbeat",
+        "params" => %{"type" => "heartbeat"},
+        "jsonrpc" => "2.0"
+      }
+      
+      # Call the handle_message function directly
+      result = Adapter.handle_message(message, state)
+      
+      # Verify the result - should just update state without reply
+      assert {:ok, _updated_state} = result
+    end
+    
+    test "handle_message processes test_request heartbeat messages correctly" do
+      # Create a minimal state
+      state = %{heartbeat_enabled: true, heartbeat_interval: 30, requests: %{}}
+      
+      # Create a test_request message from the server
+      message = %{
+        "method" => "heartbeat",
+        "params" => %{"type" => "test_request"},
+        "jsonrpc" => "2.0"
+      }
+      
+      # Call the handle_message function directly
+      result = Adapter.handle_message(message, state)
+      
+      # Verify the result - should send a reply
+      assert {:reply, encoded_payload, updated_state} = result
+      
+      # The encoded payload should be a JSON-RPC public/test request
+      decoded = Jason.decode!(encoded_payload)
+      assert decoded["method"] == "public/test"
+      assert decoded["jsonrpc"] == "2.0"
+      assert is_integer(decoded["id"])
+      
+      # State should have the request tracked
+      assert Map.has_key?(updated_state.requests, decoded["id"])
+    end
+    
+    test "handle_message processes legacy test_request messages correctly" do
+      # Create a minimal state
+      state = %{heartbeat_enabled: true, heartbeat_interval: 30, requests: %{}}
+      
+      # Create a legacy test_request message (different format)
+      message = %{
+        "method" => "test_request",
+        "params" => %{},
+        "jsonrpc" => "2.0"
+      }
+      
+      # Call the handle_message function directly
+      result = Adapter.handle_message(message, state)
+      
+      # Verify the result - should send a reply
+      assert {:reply, encoded_payload, updated_state} = result
+      
+      # The encoded payload should be a JSON-RPC public/test request
+      decoded = Jason.decode!(encoded_payload)
+      assert decoded["method"] == "public/test"
+      assert decoded["jsonrpc"] == "2.0"
+      assert is_integer(decoded["id"])
+      
+      # State should have the request tracked
+      assert Map.has_key?(updated_state.requests, decoded["id"])
+    end
+    
+    test "handle_frame processes test_request heartbeat frames correctly" do
+      # Create a minimal state
+      state = %{heartbeat_enabled: true, heartbeat_interval: 30}
+      
+      # Create a raw WebSocket frame with a test_request message
+      frame_data = Jason.encode!(%{
+        "method" => "heartbeat",
+        "params" => %{"type" => "test_request"},
+        "jsonrpc" => "2.0"
+      })
+      
+      # Call the handle_frame function directly
+      result = Adapter.handle_frame(:text, frame_data, state)
+      
+      # Verify the result - should send a reply
+      assert {:reply, encoded_payload, _updated_state} = result
+      
+      # The encoded payload should be a JSON-RPC public/test request
+      decoded = Jason.decode!(encoded_payload)
+      assert decoded["method"] == "public/test"
+      assert decoded["jsonrpc"] == "2.0"
+      assert is_integer(decoded["id"])
+    end
+    
+    test "handle_frame ignores non-heartbeat frames" do
+      # Create a minimal state
+      state = %{heartbeat_enabled: true, heartbeat_interval: 30}
+      
+      # Create a raw WebSocket frame with a non-heartbeat message
+      frame_data = Jason.encode!(%{
+        "jsonrpc" => "2.0",
+        "method" => "public/get_time",
+        "id" => 42
+      })
+      
+      # Call the handle_frame function directly
+      result = Adapter.handle_frame(:text, frame_data, state)
+      
+      # Verify the result - should not send a reply
+      assert {:ok, _state} = result
+    end
+  end
+
   describe "Adapter heartbeat functions" do
     test "generate_set_heartbeat_data/2 creates proper RPC payload" do
       # Create state for testing
