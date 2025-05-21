@@ -1,15 +1,31 @@
 defmodule DeribitEx.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @source_url "https://github.com/username/deribit_ex"
+
   def project do
     [
       app: :deribit_ex,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      description: "An Elixir library for interacting with the Deribit API via WebSocket"
+      description: description(),
+      package: package(),
+      docs: docs(),
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
+      test_coverage: [tool: ExCoveralls],
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        ignore_warnings: ".dialyzer_ignore.exs"
+      ]
     ]
   end
 
@@ -36,8 +52,61 @@ defmodule DeribitEx.MixProject do
       {:dialyxir, "~> 1.3", only: [:dev, :test], runtime: false},
       {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.22.0", only: :dev},
+      {:excoveralls, "~> 0.16", only: :test},
       # Tasks
-      {:task_validator, "~> 0.5.0", only: :dev},
+      {:task_validator, "~> 0.5.0", only: :dev}
+    ]
+  end
+
+  defp description do
+    """
+    An Elixir library for interacting with the Deribit cryptocurrency exchange API via WebSocket.
+    Handles authentication, request/response management, subscriptions, rate limiting, and time synchronization.
+    """
+  end
+
+  defp package do
+    [
+      name: "deribit_ex",
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md"
+      },
+      maintainers: ["Your Name"]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      source_url: @source_url,
+      extras: [
+        "README.md",
+        "CHANGELOG.md"
+      ],
+      groups_for_modules: [
+        "Core Components": [
+          DeribitEx.DeribitClient,
+          DeribitEx.DeribitRPC,
+          DeribitEx.DeribitAdapter
+        ],
+        "Authentication": [
+          DeribitEx.TokenManager,
+          DeribitEx.SessionContext
+        ],
+        "WebSocket Management": [
+          DeribitEx.ResubscriptionHandler,
+          DeribitEx.DeribitRateLimitHandler,
+          DeribitEx.TimeSyncService,
+          DeribitEx.TimeSyncSupervisor
+        ],
+        "Utilities": [
+          DeribitEx.OrderContext,
+          DeribitEx.Telemetry
+        ]
+      ]
     ]
   end
 end

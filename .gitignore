@@ -21,3 +21,11 @@ deribit_ex-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Dialyzer PLTs
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
+
+# Environmental variables
+.env
+*.env

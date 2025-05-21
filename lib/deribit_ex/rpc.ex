@@ -380,9 +380,7 @@ defmodule DeribitEx.DeribitRPC do
       %{channel: "trades.BTC-PERPETUAL.raw", type: :subscription}
   """
   @spec extract_metadata(map()) :: map()
-  def extract_metadata(
-        %{"method" => "subscription", "params" => %{"channel" => channel}} = _response
-      ) do
+  def extract_metadata(%{"method" => "subscription", "params" => %{"channel" => channel}} = _response) do
     # Process subscription notifications
     %{
       channel: channel,
@@ -390,8 +388,7 @@ defmodule DeribitEx.DeribitRPC do
     }
   end
 
-  def extract_metadata(%{"usIn" => user_in, "usOut" => user_out})
-      when is_integer(user_in) and is_integer(user_out) do
+  def extract_metadata(%{"usIn" => user_in, "usOut" => user_out}) when is_integer(user_in) and is_integer(user_out) do
     # Extract timing information when available
     processing_time = user_out - user_in
 

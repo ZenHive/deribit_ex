@@ -1,9 +1,9 @@
 defmodule DeribitEx.DeribitAuthEndpointsTest do
   use ExUnit.Case
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitAdapter
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   describe "authentication data generation" do
     test "generate_auth_data/1 creates proper JSON-RPC structure" do
@@ -289,9 +289,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       # Show some debug information
       IO.puts("API key from config: #{if config_id, do: "SET", else: "nil"}")
 
-      IO.puts(
-        "Using api_key: #{if api_key, do: String.slice(api_key, 0, 4) <> "...", else: "nil"}"
-      )
+      IO.puts("Using api_key: #{if api_key, do: String.slice(api_key, 0, 4) <> "...", else: "nil"}")
 
       # Fail test if credentials are missing
       if !(api_key && secret && api_key != "" && secret != "") do
@@ -412,9 +410,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
         "Refresh token type: #{(is_binary(refresh_token) && "string") || (is_map(refresh_token) && "map") || (is_list(refresh_token) && "list") || (is_number(refresh_token) && "number") || "unknown"}"
       )
 
-      IO.puts(
-        "Refresh token value: #{if refresh_token, do: String.slice(refresh_token, 0, 10), else: "nil"}..."
-      )
+      IO.puts("Refresh token value: #{if refresh_token, do: String.slice(refresh_token, 0, 10), else: "nil"}...")
 
       IO.puts("Token scope: #{auth_result["scope"]}")
 
@@ -499,9 +495,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       else
         IO.puts("Skipping test: Refresh token doesn't have required session scope.")
 
-        IO.puts(
-          "Fork token operation requires a refresh token with session scope, which we don't have."
-        )
+        IO.puts("Fork token operation requires a refresh token with session scope, which we don't have.")
 
         # Skip the test by just returning (not raising an error)
         assert true

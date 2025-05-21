@@ -178,8 +178,7 @@ defmodule DeribitEx.DeribitAdapter do
       auth_handler: __MODULE__,
       credentials: %{
         "api_key" => System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY"),
-        "secret" =>
-          System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
+        "secret" => System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
       },
       # Set the optimal auth refresh threshold
       # Deribit tokens typically last 900 seconds (15 minutes)
@@ -423,11 +422,7 @@ defmodule DeribitEx.DeribitAdapter do
   defp handle_token_response(
          %{
            "result" =>
-             %{
-               "access_token" => access_token,
-               "expires_in" => expires_in,
-               "refresh_token" => refresh_token
-             } = result
+             %{"access_token" => access_token, "expires_in" => expires_in, "refresh_token" => refresh_token} = result
          },
          state,
          operation

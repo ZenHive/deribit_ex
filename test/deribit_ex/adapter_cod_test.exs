@@ -93,8 +93,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert updated_state == state
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :enabled], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :enabled], %{system_time: _}, metadata}
 
       assert metadata.scope == "connection"
     end
@@ -128,8 +127,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _}, metadata}
 
       assert metadata.error == error
     end
@@ -228,8 +226,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert updated_state.cod_enabled == false
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :disabled], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :disabled], %{system_time: _}, metadata}
 
       assert metadata.scope == "connection"
     end
@@ -263,8 +260,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _}, metadata}
 
       assert metadata.error == error
     end
@@ -340,8 +336,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert updated_state.cod_scope == "connection"
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _}, metadata}
 
       assert metadata.enabled == true
       assert metadata.scope == "connection"
@@ -374,8 +369,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert updated_state.cod_scope == "account"
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _}, metadata}
 
       assert metadata.enabled == false
       assert metadata.scope == "account"
@@ -410,8 +404,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _}, metadata}
 
       assert metadata.error == error
     end

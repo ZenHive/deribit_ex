@@ -15,9 +15,7 @@ defmodule DeribitEx.EnvCheckTest do
       "DERIBIT_CLIENT_ID type: #{inspect((client_id && ((is_binary(client_id) && "string") || typeof(client_id))) || "nil")}"
     )
 
-    IO.puts(
-      "DERIBIT_CLIENT_SECRET length: #{inspect((client_secret && String.length(client_secret)) || 0)}"
-    )
+    IO.puts("DERIBIT_CLIENT_SECRET length: #{inspect((client_secret && String.length(client_secret)) || 0)}")
 
     IO.puts("DERIBIT_HOST: #{inspect(host)}")
 

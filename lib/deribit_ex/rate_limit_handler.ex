@@ -32,6 +32,82 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
   require Logger
 
+  @typedoc """
+  Operation types that can be rate limited.
+  """
+  @type operation_type :: :auth | :subscription | :query | :order | :high_priority | :cancel
+
+  @typedoc """
+  Cost map specifying token costs for different operation types.
+  """
+  @type cost_map :: %{optional(operation_type) => non_neg_integer}
+
+  @typedoc """
+  Rate limiting modes that determine token bucket parameters.
+  """
+  @type rate_limit_mode :: :cautious | :normal | :aggressive
+
+  @typedoc """
+  Token bucket state for the rate limiter.
+  """
+  @type bucket_state :: %{
+          tokens: non_neg_integer(),
+          capacity: pos_integer(),
+          refill_rate: pos_integer(),
+          refill_interval: pos_integer(),
+          last_refill: integer(),
+          queue: :queue.queue(),
+          queue_size: non_neg_integer(),
+          queue_limit: pos_integer()
+        }
+
+  @typedoc """
+  Adaptive state for the rate limiter.
+  """
+  @type adaptive_state :: %{
+          backoff_multiplier: float(),
+          backoff_initial: float(),
+          backoff_max: float(),
+          backoff_reset_after: pos_integer(),
+          last_429: integer() | nil,
+          recovery_factor: float(),
+          recovery_increase: float(),
+          recovery_interval: pos_integer(),
+          last_recovery: integer(),
+          original_capacity: pos_integer(),
+          original_refill_rate: pos_integer(),
+          telemetry_prefix: list(atom())
+        }
+
+  @typedoc """
+  Configuration for the rate limiter.
+  """
+  @type config :: %{
+          mode: rate_limit_mode(),
+          cost_map: cost_map()
+        }
+
+  @typedoc """
+  Request handler tracking information.
+  """
+  @type request_info :: %{
+          id: String.t(),
+          op_type: operation_type(),
+          sent_at: integer()
+        }
+
+  @typedoc """
+  Overall state for the rate limiter.
+  """
+  @type state :: %{
+          bucket: bucket_state(),
+          adaptive: adaptive_state(),
+          config: config(),
+          response_handlers: %{optional(String.t()) => request_info()},
+          last_tick: integer() | nil,
+          recent_responses: list(map()) | nil
+        }
+
   # Default operation costs - these will be merged with any provided in config
   @default_cost_map %{
     subscription: 5,
@@ -64,7 +140,28 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   @impl RateLimitHandler
   @doc """
   Initializes rate limit state with token bucket and adaptive parameters.
+
+  ## Parameters
+    * `opts` - Configuration options for the rate limiter:
+      * `:mode` - Rate limiting mode (:cautious, :normal, :aggressive)
+      * `:cost_map` - Map of operation costs
+      * `:capacity` - Override token bucket capacity
+      * `:refill_rate` - Override token refill rate
+      * `:refill_interval` - Override token refill interval
+      * `:queue_limit` - Maximum queue size for delayed requests
+      * `:adaptive` - Adaptive rate limiting options:
+        * `:backoff_initial` - Initial backoff multiplier when 429 is hit
+        * `:backoff_max` - Maximum backoff multiplier
+        * `:backoff_reset_after` - Time after which backoff resets (ms)
+        * `:recovery_factor` - Factor to reduce capacity by when 429 is hit
+        * `:recovery_increase` - Rate at which capacity recovers
+        * `:recovery_interval` - Interval between capacity recovery attempts
+        * `:telemetry_prefix` - Prefix for telemetry events
+  
+  ## Returns
+    * `{:ok, state}` - Initialized rate limiter state
   """
+  @spec rate_limit_init(map()) :: {:ok, state()}
   def rate_limit_init(opts) do
     # Get mode-specific bucket parameters or default to normal mode
     mode = Map.get(opts, :mode, :normal)
@@ -150,7 +247,17 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
   This is the main entry point for the rate limiting handler and is called
   for every request sent to the WebSocket API.
+
+  ## Parameters
+    * `request` - The request to be rate limited (map or JSON string)
+    * `state` - Current rate limiter state
+
+  ## Returns
+    * `{:ok, state}` - Request is allowed, with updated state
+    * `{:backoff, delay_ms, state}` - Request should be delayed by specified ms
   """
+  @spec check_rate_limit(map() | String.t(), state()) :: 
+          {:ok, state()} | {:backoff, non_neg_integer(), state()}
   def check_rate_limit(request, state) do
     # Extract request payload and ID
     {request_payload, request_id} = extract_request_info(request)
@@ -166,6 +273,8 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Handle a request that is subject to rate limiting
+  @spec handle_rate_limited_request(String.t() | nil, operation_type(), non_neg_integer(), state()) ::
+          {:ok, state()} | {:backoff, non_neg_integer(), state()}
   defp handle_rate_limited_request(request_id, op_type, cost, state) do
     # Update token bucket and apply recovery if needed
     bucket = refill_tokens(state.bucket)
@@ -181,6 +290,14 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Process a request that's allowed to proceed (enough tokens)
+  @spec process_allowed_request(
+          String.t() | nil,
+          operation_type(),
+          non_neg_integer(),
+          bucket_state(),
+          adaptive_state(),
+          state()
+        ) :: {:ok, state()}
   defp process_allowed_request(request_id, op_type, cost, bucket, adaptive, state) do
     # Consume tokens for this request
     bucket = %{bucket | tokens: bucket.tokens - cost}
@@ -204,6 +321,13 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Process a request that's being limited (not enough tokens)
+  @spec process_limited_request(
+          operation_type(),
+          non_neg_integer(),
+          bucket_state(),
+          adaptive_state(),
+          state()
+        ) :: {:backoff, non_neg_integer(), state()}
   defp process_limited_request(op_type, cost, bucket, adaptive, state) do
     # Calculate delay based on adaptive backoff
     delay_ms = trunc(bucket.refill_interval * adaptive.backoff_multiplier)
@@ -217,8 +341,10 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Update response handlers for a request with ID
+  @spec update_response_handlers(nil, operation_type(), map()) :: map()
   defp update_response_handlers(nil, _op_type, response_handlers), do: response_handlers
 
+  @spec update_response_handlers(String.t(), operation_type(), map()) :: map()
   defp update_response_handlers(request_id, op_type, response_handlers) do
     # Store information about this request for response handling
     request_info = %{
@@ -231,6 +357,12 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Emit telemetry for allowed requests
+  @spec emit_request_allowed_telemetry(
+          operation_type(),
+          non_neg_integer(),
+          bucket_state(),
+          adaptive_state()
+        ) :: :ok
   defp emit_request_allowed_telemetry(op_type, cost, bucket, adaptive) do
     :telemetry.execute(
       adaptive.telemetry_prefix ++ [:request_allowed],
@@ -245,6 +377,13 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Emit telemetry for limited requests
+  @spec emit_request_limited_telemetry(
+          operation_type(),
+          non_neg_integer(),
+          non_neg_integer(),
+          bucket_state(),
+          adaptive_state()
+        ) :: :ok
   defp emit_request_limited_telemetry(op_type, cost, delay_ms, bucket, adaptive) do
     :telemetry.execute(
       adaptive.telemetry_prefix ++ [:request_limited],
@@ -264,7 +403,14 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
   This is used for processing responses and adjusting rate limits based on
   429 responses from the Deribit API.
+
+  ## Parameters
+    * `state` - Current rate limiter state
+    
+  ## Returns
+    * `{:ok, state}` - Updated state after tick processing
   """
+  @spec handle_tick(state()) :: {:ok, state()}
   def handle_tick(state) do
     # Update last_response_check time
     now = current_time_ms()
@@ -344,11 +490,13 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Helper to extract request payload and ID from request
+  @spec extract_request_info(map()) :: {map(), String.t() | nil}
   defp extract_request_info(request) when is_map(request) do
     # If it's already a map, return it and the ID if available
     {request, Map.get(request, "id")}
   end
 
+  @spec extract_request_info(String.t()) :: {map() | String.t(), String.t() | nil}
   defp extract_request_info(request) when is_binary(request) do
     # Parse JSON string
     case Jason.decode(request) do
@@ -358,6 +506,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
     end
   end
 
+  @spec extract_request_info(term()) :: {term(), nil}
   defp extract_request_info(request) do
     # For other types, return as is without ID
     {request, nil}
@@ -368,6 +517,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   #
 
   # Extract operation type from request payload
+  @spec extract_operation_type(map()) :: operation_type()
   defp extract_operation_type(request_payload) when is_map(request_payload) do
     # Try to get method from JSON-RPC
     method = request_payload["method"]
@@ -381,6 +531,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Handle string payload (parsing JSON)
+  @spec extract_operation_type(String.t()) :: operation_type()
   defp extract_operation_type(request_payload) when is_binary(request_payload) do
     case Jason.decode(request_payload) do
       {:ok, decoded} -> extract_operation_type(decoded)
@@ -390,9 +541,11 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Handle other payload types
+  @spec extract_operation_type(term()) :: operation_type()
   defp extract_operation_type(_), do: :query
 
   # Determine operation type based on the method string
+  @spec determine_operation_type(String.t()) :: operation_type()
   defp determine_operation_type(method) do
     cond do
       # Authentication methods
@@ -410,19 +563,23 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Get the cost of an operation from the cost map
+  @spec get_operation_cost(operation_type(), cost_map()) :: non_neg_integer()
   defp get_operation_cost(op_type, cost_map) do
     Map.get(cost_map, op_type, 1)
   end
 
   # Check if a response is a rate limit error (429)
+  @spec rate_limit_error?(map()) :: boolean()
   defp rate_limit_error?(%{"error" => %{"code" => code}}) when code in [10_429, 11_010], do: true
   defp rate_limit_error?(%{error: %{code: code}}) when code in [10_429, 11_010], do: true
   defp rate_limit_error?(_), do: false
 
   # Get current time in milliseconds
+  @spec current_time_ms() :: integer()
   def current_time_ms, do: System.monotonic_time(:millisecond)
 
   # Refill tokens in the bucket based on elapsed time
+  @spec refill_tokens(bucket_state()) :: bucket_state()
   defp refill_tokens(bucket) do
     now = current_time_ms()
     elapsed = now - bucket.last_refill
@@ -448,6 +605,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Maybe reset backoff multiplier if enough time has passed
+  @spec maybe_reset_backoff(adaptive_state()) :: adaptive_state()
   defp maybe_reset_backoff(adaptive) do
     now = current_time_ms()
 
@@ -466,6 +624,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
   end
 
   # Apply rate limit recovery if needed
+  @spec maybe_apply_recovery(bucket_state(), adaptive_state()) :: {bucket_state(), adaptive_state()}
   defp maybe_apply_recovery(bucket, adaptive) do
     now = current_time_ms()
 

@@ -12,8 +12,8 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   require Logger
 
@@ -585,9 +585,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
                         assert true
 
                       true ->
-                        Logger.warning(
-                          "Unexpected unsubscribe verify response format: #{inspect(verify_result)}"
-                        )
+                        Logger.warning("Unexpected unsubscribe verify response format: #{inspect(verify_result)}")
 
                         # Don't fail the test if we get an unexpected format
                         assert true
@@ -599,9 +597,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
                       # Skip this and don't fail the test
                       assert true
                     else
-                      Logger.warning(
-                        "Invalid unsubscribe verify response: #{inspect(verify_decoded)}"
-                      )
+                      Logger.warning("Invalid unsubscribe verify response: #{inspect(verify_decoded)}")
 
                       # Don't fail the test if we get an unexpected format
                       assert true
@@ -609,9 +605,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
                   end
 
                 {:error, reason} ->
-                  Logger.warning(
-                    "Failed to parse unsubscribe verify response: #{inspect(reason)}"
-                  )
+                  Logger.warning("Failed to parse unsubscribe verify response: #{inspect(reason)}")
 
                   # Don't fail the test if we can't parse the response
                   assert true

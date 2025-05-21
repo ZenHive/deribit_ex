@@ -1,8 +1,8 @@
 defmodule DeribitEx.BootstrapSequenceTest do
   use ExUnit.Case
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   # Helper function to safely initialize with error handling for already_started
   defp safe_initialize(conn, opts) do
@@ -252,9 +252,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
             {:error, :authenticate, _reason} ->
               # For this test, we'll allow authentication failures to pass
               # since this is a race condition / connection issue in the test suite
-              IO.puts(
-                "Authentication failed - this is acceptable for this specific test in full suite"
-              )
+              IO.puts("Authentication failed - this is acceptable for this specific test in full suite")
 
               assert true
 
@@ -324,9 +322,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
             {:error, :authenticate, _reason} ->
               # For this test, we'll allow authentication failures to pass
               # since this is a race condition / connection issue in the test suite
-              IO.puts(
-                "Authentication failed - this is acceptable for this specific test in full suite"
-              )
+              IO.puts("Authentication failed - this is acceptable for this specific test in full suite")
 
               assert true
 

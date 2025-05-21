@@ -400,8 +400,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       {:ok, updated_state} = DeribitAdapter.handle_connect(:http, state)
 
       # Verify telemetry event was sent
-      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _}, metadata}
 
       assert metadata.transport == :http
       assert metadata.reconnect_attempts == 0
@@ -426,13 +425,12 @@ defmodule DeribitEx.DeribitAdapterTest do
       {:authenticate, updated_state} = DeribitAdapter.handle_connect(:http, reconnection_state)
 
       # Verify telemetry events were sent
-      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _}, metadata}
 
       assert metadata.reconnect_attempts == 1
 
-      assert_received {:telemetry, [:deribit_ex, :connection, :reconnect_with_auth],
-                       %{system_time: _}, subscription_metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :reconnect_with_auth], %{system_time: _},
+                       subscription_metadata}
 
       assert subscription_metadata.subscription_count == 1
 
@@ -489,8 +487,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       :ok = DeribitAdapter.terminate(:normal, state)
 
       # Verify telemetry event was sent
-      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
 
       # Verify metadata includes reason and duration
       assert metadata.reason == :normal
@@ -504,8 +501,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       {:reconnect, updated_state} = DeribitAdapter.terminate({:error, :network_error}, state)
 
       # Verify telemetry event
-      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
 
       assert metadata.reason == {:error, :network_error}
       assert metadata.will_reconnect == true
@@ -522,8 +518,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       :ok = DeribitAdapter.terminate({:error, :network_error}, state_at_max)
 
       # Verify telemetry indicates no more reconnects
-      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
 
       assert metadata.reason == {:error, :network_error}
       assert metadata.will_reconnect == false
@@ -537,8 +532,7 @@ defmodule DeribitEx.DeribitAdapterTest do
         DeribitAdapter.terminate({:auth_error, "Invalid credentials"}, state)
 
       # Verify telemetry event
-      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
 
       assert metadata.will_reconnect == true
       assert metadata.auth_status == :unauthenticated
@@ -559,14 +553,12 @@ defmodule DeribitEx.DeribitAdapterTest do
         DeribitAdapter.terminate({:auth_error, "Token expired"}, authenticated_state)
 
       # Verify telemetry events
-      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
-                       metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
 
       assert metadata.will_reconnect == true
       assert metadata.auth_status == :authenticated
 
-      assert_received {:telemetry, [:deribit_ex, :connection, :auth_error_reconnect],
-                       %{system_time: _}, error_metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :auth_error_reconnect], %{system_time: _}, error_metadata}
 
       assert error_metadata.reason == {:auth_error, "Token expired"}
 

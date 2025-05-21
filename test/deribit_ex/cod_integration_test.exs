@@ -12,8 +12,8 @@ defmodule DeribitEx.DeribitCODIntegrationTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   require Logger
 
@@ -124,9 +124,7 @@ defmodule DeribitEx.DeribitCODIntegrationTest do
 
           {:error, error} ->
             # Log permission error but don't fail the test
-            Logger.info(
-              "Skipping account scope test - insufficient permissions: #{inspect(error)}"
-            )
+            Logger.info("Skipping account scope test - insufficient permissions: #{inspect(error)}")
 
             :ok
         end

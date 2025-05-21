@@ -33,6 +33,47 @@ defmodule DeribitEx.TimeSyncService do
   # Default synchronization interval in milliseconds (5 minutes)
   @default_sync_interval 300_000
 
+  @typedoc """
+  Time in milliseconds since epoch.
+  """
+  @type time_ms :: integer()
+
+  @typedoc """
+  Delta between server and local time in milliseconds.
+  """
+  @type time_delta :: integer()
+
+  @typedoc """
+  Time synchronization service server identifier.
+  """
+  @type server :: GenServer.server()
+
+  @typedoc """
+  Options for starting the TimeSyncService.
+  """
+  @type start_options :: [
+          sync_interval: integer(),
+          name: GenServer.name()
+        ]
+
+  @typedoc """
+  Synchronization information returned by sync_info/1.
+  """
+  @type sync_info :: %{
+          delta: time_delta(),
+          last_sync: time_ms() | nil
+        }
+
+  @typedoc """
+  Internal state of the TimeSyncService.
+  """
+  @type state :: %{
+          client_pid: pid(),
+          interval: integer(),
+          delta: time_delta(),
+          last_sync: time_ms() | nil
+        }
+
   @doc """
   Starts the TimeSyncService linked to the caller.
 
@@ -46,6 +87,7 @@ defmodule DeribitEx.TimeSyncService do
     * `{:ok, pid}` - The PID of the started service
     * `{:error, reason}` - If the service could not be started
   """
+  @spec start_link(pid(), start_options()) :: GenServer.on_start()
   def start_link(client_pid, opts \\ []) do
     interval = Keyword.get(opts, :sync_interval, @default_sync_interval)
     name = Keyword.get(opts, :name, __MODULE__)
@@ -68,6 +110,7 @@ defmodule DeribitEx.TimeSyncService do
   ## Returns
     * The current server time in milliseconds
   """
+  @spec server_time(server()) :: time_ms()
   def server_time(server \\ __MODULE__) do
     local_to_server(System.system_time(:millisecond), server)
   end
@@ -82,6 +125,7 @@ defmodule DeribitEx.TimeSyncService do
   ## Returns
     * The corresponding server time in milliseconds
   """
+  @spec local_to_server(time_ms(), server()) :: time_ms()
   def local_to_server(local_time_ms, server \\ __MODULE__) do
     delta = get_time_delta(server)
     local_time_ms + delta
@@ -97,6 +141,7 @@ defmodule DeribitEx.TimeSyncService do
   ## Returns
     * The corresponding local time in milliseconds
   """
+  @spec server_to_local(time_ms(), server()) :: time_ms()
   def server_to_local(server_time_ms, server \\ __MODULE__) do
     delta = get_time_delta(server)
     server_time_ms - delta
@@ -112,6 +157,7 @@ defmodule DeribitEx.TimeSyncService do
     * The time delta in milliseconds (server_time - local_time)
     * Returns 0 if the service has not yet successfully synchronized
   """
+  @spec get_time_delta(server()) :: time_delta()
   def get_time_delta(server \\ __MODULE__) do
     GenServer.call(server, :get_delta)
   end
@@ -125,6 +171,7 @@ defmodule DeribitEx.TimeSyncService do
   ## Returns
     * `:ok` - Synchronization request was submitted
   """
+  @spec sync_now(server()) :: :ok
   def sync_now(server \\ __MODULE__) do
     GenServer.cast(server, :sync_now)
   end
@@ -139,6 +186,7 @@ defmodule DeribitEx.TimeSyncService do
     * A map containing `:delta` and `:last_sync` (timestamp of last successful sync)
     * Returns nil for `:last_sync` if no successful synchronization has occurred yet
   """
+  @spec sync_info(server()) :: sync_info()
   def sync_info(server \\ __MODULE__) do
     GenServer.call(server, :sync_info)
   end
@@ -146,6 +194,7 @@ defmodule DeribitEx.TimeSyncService do
   # GenServer callbacks
 
   @impl true
+  @spec init(state()) :: {:ok, state()}
   def init(state) do
     # Schedule immediate initial sync
     Process.send_after(self(), :sync_time, 0)
@@ -155,16 +204,18 @@ defmodule DeribitEx.TimeSyncService do
   end
 
   @impl true
+  @spec handle_call(:get_delta | :sync_info, GenServer.from(), state()) :: 
+          {:reply, time_delta() | sync_info(), state()}
   def handle_call(:get_delta, _from, state) do
     {:reply, state.delta, state}
   end
 
-  @impl true
   def handle_call(:sync_info, _from, state) do
     {:reply, %{delta: state.delta, last_sync: state.last_sync}, state}
   end
 
   @impl true
+  @spec handle_cast(:sync_now, state()) :: {:noreply, state()}
   def handle_cast(:sync_now, state) do
     # Perform immediate sync
     new_state = perform_sync(state)
@@ -172,6 +223,7 @@ defmodule DeribitEx.TimeSyncService do
   end
 
   @impl true
+  @spec handle_info(:sync_time, state()) :: {:noreply, state()}
   def handle_info(:sync_time, state) do
     # Perform the sync operation
     new_state = perform_sync(state)
@@ -183,11 +235,13 @@ defmodule DeribitEx.TimeSyncService do
   # Private functions
 
   # Schedule the next sync operation
+  @spec schedule_sync(integer()) :: reference()
   defp schedule_sync(interval) do
     Process.send_after(self(), :sync_time, interval)
   end
 
   # Perform time synchronization with the server
+  @spec perform_sync(state()) :: state()
   defp perform_sync(state) do
     # Record the local time before request
     local_before = System.system_time(:millisecond)

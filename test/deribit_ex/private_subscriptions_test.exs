@@ -18,8 +18,8 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   require Logger
 

@@ -10,29 +10,21 @@ defmodule EnvTest do
 
     IO.puts("Direct check: DERIBIT_CLIENT_ID = #{inspect(client_id_env)}")
 
-    IO.puts(
-      "Direct check: DERIBIT_CLIENT_SECRET = #{if client_secret_env, do: "[SET]", else: "nil"}"
-    )
+    IO.puts("Direct check: DERIBIT_CLIENT_SECRET = #{if client_secret_env, do: "[SET]", else: "nil"}")
 
     # Print environment and application config values
     IO.puts("\nEnvironment variables:")
     IO.puts("DERIBIT_CLIENT_ID: #{inspect(System.get_env("DERIBIT_CLIENT_ID"))}")
 
-    IO.puts(
-      "DERIBIT_CLIENT_SECRET: #{if System.get_env("DERIBIT_CLIENT_SECRET"), do: "[SET]", else: "nil"}"
-    )
+    IO.puts("DERIBIT_CLIENT_SECRET: #{if System.get_env("DERIBIT_CLIENT_SECRET"), do: "[SET]", else: "nil"}")
 
     IO.puts("DERIBIT_HOST: #{inspect(System.get_env("DERIBIT_HOST"))}")
 
-    IO.puts(
-      "DERIBIT_AUTH_REFRESH_THRESHOLD: #{inspect(System.get_env("DERIBIT_AUTH_REFRESH_THRESHOLD"))}"
-    )
+    IO.puts("DERIBIT_AUTH_REFRESH_THRESHOLD: #{inspect(System.get_env("DERIBIT_AUTH_REFRESH_THRESHOLD"))}")
 
     IO.puts("DERIBIT_RATE_LIMIT_MODE: #{inspect(System.get_env("DERIBIT_RATE_LIMIT_MODE"))}")
 
-    IO.puts(
-      "Application.get_env(:deribit_ex, :env): #{inspect(Application.get_env(:deribit_ex, :env))}"
-    )
+    IO.puts("Application.get_env(:deribit_ex, :env): #{inspect(Application.get_env(:deribit_ex, :env))}")
 
     IO.puts("\nDirect Environment Check:")
     IO.puts("Process PID: #{inspect(self())}")

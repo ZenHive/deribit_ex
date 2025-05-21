@@ -1,0 +1,96 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    
+    env:
+      MIX_ENV: test
+      DERIBIT_TEST_MODE: "true"
+      DERIBIT_CLIENT_ID: ${{ secrets.DERIBIT_CLIENT_ID }}
+      DERIBIT_CLIENT_SECRET: ${{ secrets.DERIBIT_CLIENT_SECRET }}
+    
+    strategy:
+      matrix:
+        elixir: ['1.14', '1.15']
+        otp: ['25', '26']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: ${{ matrix.elixir }}
+        otp-version: ${{ matrix.otp }}
+
+    - name: Restore dependencies cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          deps
+          _build
+          priv/plts
+        key: ${{ runner.os }}-mix-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-${{ matrix.elixir }}-${{ matrix.otp }}-
+
+    - name: Install dependencies
+      run: mix deps.get
+      
+    - name: Compile
+      run: mix compile --warnings-as-errors
+      
+    - name: Create PLTs directory
+      run: mkdir -p priv/plts
+      
+    - name: Check formatting
+      run: mix format --check-formatted
+      
+    - name: Run Credo
+      run: mix credo --strict
+      
+    - name: Run tests
+      run: mix test
+      
+    - name: Run Dialyzer
+      run: mix dialyzer
+      
+    - name: Check documentation
+      run: mix doctor
+
+  publish:
+    name: Publish to Hex.pm
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.14'
+        otp-version: '25'
+        
+    - name: Restore dependencies cache
+      uses: actions/cache@v3
+      with:
+        path: deps
+        key: ${{ runner.os }}-mix-deps-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-deps-
+        
+    - name: Install dependencies
+      run: mix deps.get
+      
+    - name: Publish to Hex.pm
+      env:
+        HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+      run: mix hex.publish --yes

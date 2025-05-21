@@ -206,9 +206,7 @@ defmodule DeribitEx.DeribitAdapterExtensions do
       case TokenManager.perform_resubscription(state.token_manager, client_conn) do
         {:ok, updated_token_manager, results} ->
           # Log successful resubscription
-          Logger.info(
-            "Successfully resubscribed to #{map_size(results)} channels after reconnect"
-          )
+          Logger.info("Successfully resubscribed to #{map_size(results)} channels after reconnect")
 
           # Update state and clear need_resubscribe flag
           state =

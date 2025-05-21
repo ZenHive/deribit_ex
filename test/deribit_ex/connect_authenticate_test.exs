@@ -16,8 +16,8 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.Test.EnvSetup
   alias DeribitEx.DeribitClient
+  alias DeribitEx.Test.EnvSetup
 
   @tag :integration
   test "connect and authenticate using credentials from connection" do
