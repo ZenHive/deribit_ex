@@ -1,24 +1,24 @@
-defmodule DeribitEx.DeribitAdapterIntegration do
+defmodule DeribitEx.AdapterIntegration do
   @moduledoc """
-  Integration file to add token management to DeribitAdapter.
+  Integration file to add token management to Adapter.
 
-  This module provides a structured approach to patching DeribitAdapter with
+  This module provides a structured approach to patching Adapter with
   token management functionality. Using this approach ensures better migration
-  control than directly modifying DeribitAdapter.ex.
+  control than directly modifying Adapter.ex.
 
   ## Usage
 
   Add the following line to the application.ex start function to apply patches:
 
   ```elixir
-  DeribitEx.DeribitAdapterIntegration.apply_patches()
+  DeribitEx.AdapterIntegration.apply_patches()
   ```
   """
 
   require Logger
 
   @doc """
-  Applies all token management patches to DeribitAdapter.
+  Applies all token management patches to Adapter.
 
   This function would set up function replacements, but for now it's just
   a placeholder since the :meck library is not included in the project.
@@ -26,7 +26,7 @@ defmodule DeribitEx.DeribitAdapterIntegration do
   @spec apply_patches() :: :ok
   def apply_patches do
     # Log that we need to add :meck to dependencies
-    Logger.info("DeribitAdapter token management patches require :meck library")
+    Logger.info("Adapter token management patches require :meck library")
     Logger.info("Add {:meck, \"~> 0.9.2\"} to your dependencies in mix.exs")
 
     # Do nothing until :meck is available

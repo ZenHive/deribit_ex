@@ -8,8 +8,8 @@ defmodule MarketMaker.Integration.DeribitTestRequestTest do
 
   use ExUnit.Case
 
-  alias DeribitEx.DeribitAdapter
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Adapter
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   @moduletag :integration
@@ -40,7 +40,7 @@ defmodule MarketMaker.Integration.DeribitTestRequestTest do
       }
 
       # Call the handle_message function with our test message
-      result = DeribitAdapter.handle_message(test_request_message, state)
+      result = Adapter.handle_message(test_request_message, state)
 
       # Verify the response format
       assert {:reply, encoded_payload, updated_state} = result
@@ -60,30 +60,30 @@ defmodule MarketMaker.Integration.DeribitTestRequestTest do
 
     test "integration: heartbeat causes test_request and we stay connected" do
       # Connect to the real API
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # Enable heartbeat with a short interval to trigger test_request
       # Using a slightly longer interval to be more stable
       # slightly above minimum interval
       interval = 15
-      {:ok, _} = DeribitClient.set_heartbeat(conn, interval)
+      {:ok, _} = Client.set_heartbeat(conn, interval)
 
       # Wait a short time for test_request messages to potentially arrive
       # We don't need to wait too long as it might cause other connection issues
       Process.sleep(5_000)
 
       # Try to perform another API operation to verify the connection is still active
-      result = DeribitClient.get_time(conn)
+      result = Client.get_time(conn)
 
       # Clean up - put in a try/catch to ensure we don't fail on cleanup
       try do
-        DeribitClient.disable_heartbeat(conn)
+        Client.disable_heartbeat(conn)
       catch
         _kind, _error -> :ok
       end
 
       try do
-        DeribitClient.disconnect(conn)
+        Client.disconnect(conn)
       catch
         _kind, _error -> :ok
       end

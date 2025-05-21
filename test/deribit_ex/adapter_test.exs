@@ -1,11 +1,11 @@
-defmodule DeribitEx.DeribitAdapterTest do
+defmodule DeribitEx.AdapterTest do
   use ExUnit.Case, async: true
 
-  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.Adapter
 
   describe "connection_info/1" do
     test "returns correct defaults for test environment" do
-      {:ok, info} = DeribitAdapter.connection_info(%{})
+      {:ok, info} = Adapter.connection_info(%{})
 
       assert info.host == "test.deribit.com"
       assert info.port == 443
@@ -14,7 +14,7 @@ defmodule DeribitEx.DeribitAdapterTest do
     end
 
     test "host can be overridden" do
-      {:ok, info} = DeribitAdapter.connection_info(%{host: "custom.deribit.com"})
+      {:ok, info} = Adapter.connection_info(%{host: "custom.deribit.com"})
 
       assert info.host == "custom.deribit.com"
     end
@@ -22,7 +22,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "init/1" do
     test "initializes state correctly" do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       assert state.auth_status == :unauthenticated
       assert state.reconnect_attempts == 0
@@ -43,7 +43,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       end)
 
       # Initialize state with credentials already set
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       state =
         put_in(state, [:credentials], %{api_key: "test_client_id", secret: "test_client_secret"})
@@ -52,7 +52,7 @@ defmodule DeribitEx.DeribitAdapterTest do
     end
 
     test "generates correct auth payload", %{state: state} do
-      {:ok, payload, updated_state} = DeribitAdapter.generate_auth_data(state)
+      {:ok, payload, updated_state} = Adapter.generate_auth_data(state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -70,7 +70,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "handle_auth_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
@@ -83,7 +83,7 @@ defmodule DeribitEx.DeribitAdapterTest do
         }
       }
 
-      {:ok, updated_state} = DeribitAdapter.handle_auth_response(response, state)
+      {:ok, updated_state} = Adapter.handle_auth_response(response, state)
 
       assert updated_state.auth_status == :authenticated
       assert updated_state.access_token == "test_token"
@@ -96,7 +96,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       response = %{"error" => error}
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_auth_response(response, state)
+        Adapter.handle_auth_response(response, state)
 
       assert updated_state.auth_status == :failed
       assert updated_state.auth_error == error
@@ -108,7 +108,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       response = %{"error" => error}
 
       {:reconnect, {:auth_error, returned_error}, updated_state} =
-        DeribitAdapter.handle_auth_response(response, state)
+        Adapter.handle_auth_response(response, state)
 
       assert updated_state.auth_status == :failed
       assert updated_state.auth_error == error
@@ -120,7 +120,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       response = %{"error" => error}
 
       {:reconnect, {:auth_error, returned_error}, updated_state} =
-        DeribitAdapter.handle_auth_response(response, state)
+        Adapter.handle_auth_response(response, state)
 
       assert updated_state.auth_status == :failed
       assert updated_state.auth_error == error
@@ -130,14 +130,14 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "subscribe/3" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :access_token, "test_token")
       %{state: state}
     end
 
     test "generates correct public subscription payload", %{state: state} do
       channel = "ticker.BTC-PERPETUAL.100ms"
-      {:ok, payload, updated_state} = DeribitAdapter.subscribe(channel, %{}, state)
+      {:ok, payload, updated_state} = Adapter.subscribe(channel, %{}, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -152,7 +152,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
     test "generates correct private subscription payload", %{state: state} do
       channel = "user.orders.BTC-PERPETUAL.raw"
-      {:ok, payload, updated_state} = DeribitAdapter.subscribe(channel, %{}, state)
+      {:ok, payload, updated_state} = Adapter.subscribe(channel, %{}, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -169,7 +169,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "handle_subscription_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       # Add a subscription request to state
       subscription_id = 12_345
@@ -199,7 +199,7 @@ defmodule DeribitEx.DeribitAdapterTest do
         }
       }
 
-      {:ok, updated_state} = DeribitAdapter.handle_subscription_response(response, state)
+      {:ok, updated_state} = Adapter.handle_subscription_response(response, state)
 
       # Check that subscription was moved from requests to active subscriptions
       assert Map.has_key?(updated_state.subscriptions, channel)
@@ -215,7 +215,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       response = %{"error" => error}
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_subscription_response(response, state)
+        Adapter.handle_subscription_response(response, state)
 
       assert returned_error == error
       # State should remain unchanged except for adding the error
@@ -225,7 +225,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "handle_message/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
@@ -238,7 +238,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       }
 
       {:needs_auth, returned_message, _updated_state} =
-        DeribitAdapter.handle_message(message, state)
+        Adapter.handle_message(message, state)
 
       assert returned_message == message
     end
@@ -246,7 +246,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "send_rpc_request/4" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :access_token, "test_token")
 
       # Set up telemetry handler to catch events
@@ -274,7 +274,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       params = %{}
 
       {:ok, encoded_request, updated_state} =
-        DeribitAdapter.send_rpc_request(method, params, state)
+        Adapter.send_rpc_request(method, params, state)
 
       # Verify the request was encoded properly
       decoded = Jason.decode!(encoded_request)
@@ -299,7 +299,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       params = %{instrument_name: "BTC-PERPETUAL"}
 
       {:ok, encoded_request, _updated_state} =
-        DeribitAdapter.send_rpc_request(method, params, state)
+        Adapter.send_rpc_request(method, params, state)
 
       # Verify auth token was added
       decoded = Jason.decode!(encoded_request)
@@ -313,7 +313,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       options = %{timeout: 20_000}
 
       {:ok, _encoded_request, updated_state} =
-        DeribitAdapter.send_rpc_request(method, params, state, options)
+        Adapter.send_rpc_request(method, params, state, options)
 
       # The timeout should have been set up, but we can't easily test the actual timer
       # Instead, we verify that the options were stored with the request
@@ -324,12 +324,12 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "handle_info/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
     test "ignores :refresh_auth when not authenticated", %{state: state} do
-      {:ok, updated_state} = DeribitAdapter.handle_info(:refresh_auth, state)
+      {:ok, updated_state} = Adapter.handle_info(:refresh_auth, state)
       assert updated_state.auth_status == :unauthenticated
     end
 
@@ -345,7 +345,7 @@ defmodule DeribitEx.DeribitAdapterTest do
         |> Map.put(:credentials, %{api_key: "test_key", secret: "test_secret"})
 
       # Refresh should be triggered
-      {:ok, request, _updated_state} = DeribitAdapter.handle_info(:refresh_auth, expiring_state)
+      {:ok, request, _updated_state} = Adapter.handle_info(:refresh_auth, expiring_state)
 
       # Request should be a JSON-RPC auth request
       decoded = Jason.decode!(request)
@@ -355,14 +355,14 @@ defmodule DeribitEx.DeribitAdapterTest do
     end
 
     test "ignores unknown messages", %{state: state} do
-      {:ok, updated_state} = DeribitAdapter.handle_info(:unknown_message, state)
+      {:ok, updated_state} = Adapter.handle_info(:unknown_message, state)
       assert updated_state == state
     end
   end
 
   describe "handle_connect/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       # Set up telemetry handler to catch events
       test_pid = self()
@@ -397,7 +397,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
     test "emits telemetry event and updates state on initial connection", %{state: state} do
       # Call handle_connect
-      {:ok, updated_state} = DeribitAdapter.handle_connect(:http, state)
+      {:ok, updated_state} = Adapter.handle_connect(:http, state)
 
       # Verify telemetry event was sent
       assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _}, metadata}
@@ -422,7 +422,7 @@ defmodule DeribitEx.DeribitAdapterTest do
         |> Map.put(:access_token, "old_token")
 
       # Call handle_connect
-      {:authenticate, updated_state} = DeribitAdapter.handle_connect(:http, reconnection_state)
+      {:authenticate, updated_state} = Adapter.handle_connect(:http, reconnection_state)
 
       # Verify telemetry events were sent
       assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _}, metadata}
@@ -444,7 +444,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
   describe "terminate/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       state =
         state
@@ -484,7 +484,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
     test "emits telemetry event and doesn't reconnect on normal termination", %{state: state} do
       # Call terminate with normal reason
-      :ok = DeribitAdapter.terminate(:normal, state)
+      :ok = Adapter.terminate(:normal, state)
 
       # Verify telemetry event was sent
       assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
@@ -498,7 +498,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
     test "handles reconnection for network errors", %{state: state} do
       # Call terminate with network error
-      {:reconnect, updated_state} = DeribitAdapter.terminate({:error, :network_error}, state)
+      {:reconnect, updated_state} = Adapter.terminate({:error, :network_error}, state)
 
       # Verify telemetry event
       assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
@@ -515,7 +515,7 @@ defmodule DeribitEx.DeribitAdapterTest do
       state_at_max = Map.put(state, :reconnect_attempts, 3)
 
       # Call terminate with network error when already at max attempts
-      :ok = DeribitAdapter.terminate({:error, :network_error}, state_at_max)
+      :ok = Adapter.terminate({:error, :network_error}, state_at_max)
 
       # Verify telemetry indicates no more reconnects
       assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
@@ -529,7 +529,7 @@ defmodule DeribitEx.DeribitAdapterTest do
     test "handles unauthenticated auth errors with normal reconnection", %{state: state} do
       # Call terminate with auth error but not authenticated
       {:reconnect, updated_state} =
-        DeribitAdapter.terminate({:auth_error, "Invalid credentials"}, state)
+        Adapter.terminate({:auth_error, "Invalid credentials"}, state)
 
       # Verify telemetry event
       assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}
@@ -550,7 +550,7 @@ defmodule DeribitEx.DeribitAdapterTest do
 
       # Call terminate with auth error
       {:reconnect_and_authenticate, updated_state} =
-        DeribitAdapter.terminate({:auth_error, "Token expired"}, authenticated_state)
+        Adapter.terminate({:auth_error, "Token expired"}, authenticated_state)
 
       # Verify telemetry events
       assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _}, metadata}

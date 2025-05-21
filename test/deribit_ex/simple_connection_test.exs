@@ -1,7 +1,7 @@
 defmodule DeribitEx.SimpleConnectionTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
 
   @doc """
   Basic smoke test to verify WebSocket connection and JSON-RPC communication work.
@@ -11,7 +11,7 @@ defmodule DeribitEx.SimpleConnectionTest do
     test_pid = self()
 
     {:ok, conn} =
-      DeribitClient.connect(%{
+      Client.connect(%{
         callback_pid: test_pid,
         ws_recv_callback: fn frame ->
           send(test_pid, {:ws_frame, frame})
@@ -23,7 +23,7 @@ defmodule DeribitEx.SimpleConnectionTest do
     assert_receive {:websockex_nova, {:connection_up, :http}}, 5000
 
     # Send a simple request
-    {:ok, response} = DeribitClient.json_rpc(conn, "public/get_time", %{})
+    {:ok, response} = Client.json_rpc(conn, "public/get_time", %{})
 
     # Parse and verify response
     decoded = Jason.decode!(response)
@@ -32,7 +32,7 @@ defmodule DeribitEx.SimpleConnectionTest do
     assert is_integer(decoded["result"])
 
     # Clean up
-    DeribitClient.disconnect(conn)
+    Client.disconnect(conn)
   end
 
   test "can authenticate with valid credentials" do
@@ -41,7 +41,7 @@ defmodule DeribitEx.SimpleConnectionTest do
     secret = System.get_env("DERIBIT_CLIENT_SECRET")
 
     if api_key && secret && api_key != "" && secret != "" do
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # Wait for connection
       receive do
@@ -51,14 +51,14 @@ defmodule DeribitEx.SimpleConnectionTest do
       end
 
       # Authenticate
-      {:ok, auth_response} = DeribitClient.authenticate(conn)
+      {:ok, auth_response} = Client.authenticate(conn)
 
       # Verify authentication
       decoded = Jason.decode!(auth_response)
       assert decoded["result"]["access_token"]
       assert decoded["result"]["expires_in"] > 0
 
-      DeribitClient.disconnect(conn)
+      Client.disconnect(conn)
     else
       :skipped
     end

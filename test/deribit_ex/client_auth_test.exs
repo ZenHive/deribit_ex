@@ -1,13 +1,13 @@
-defmodule DeribitEx.DeribitClientAuthTest do
+defmodule DeribitEx.ClientAuthTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.Adapter
 
   # This test module only tests the credential extraction logic
   # without trying to call the actual WebsockexNova.Client.authenticate function
 
   # Create a private function reference to the credential extraction logic
-  # used in DeribitClient.authenticate/3
+  # used in Client.authenticate/3
   defp extract_credentials(conn, credentials) do
     # If no credentials provided, get from connection directly
     if credentials == %{} do
@@ -26,7 +26,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
     end
   end
 
-  describe "DeribitClient credential extraction logic" do
+  describe "Client credential extraction logic" do
     test "extracts credentials from explicit parameter" do
       conn = %{
         adapter_state: %{
@@ -140,12 +140,12 @@ defmodule DeribitEx.DeribitClientAuthTest do
     end
   end
 
-  describe "DeribitAdapter credential validation" do
-    # These tests verify that the DeribitAdapter will correctly validate 
+  describe "Adapter credential validation" do
+    # These tests verify that the Adapter will correctly validate 
     # and extract credentials from various formats
 
     test "validate_credentials accepts api_key and secret" do
-      # Confirm that DeribitAdapter extracts credentials correctly when given keys
+      # Confirm that Adapter extracts credentials correctly when given keys
       # We're not going to call validate_credentials directly, but we can verify
       # that generate_auth_data correctly extracts credentials
       credentials = %{
@@ -155,7 +155,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
 
       state = %{credentials: credentials}
 
-      {:ok, payload, _} = DeribitAdapter.generate_auth_data(state)
+      {:ok, payload, _} = Adapter.generate_auth_data(state)
       decoded = Jason.decode!(payload)
 
       assert decoded["params"]["client_id"] == "test_api_key"
@@ -163,7 +163,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
     end
 
     test "validate_credentials accepts client_id in place of api_key" do
-      # Confirm that DeribitAdapter correctly uses client_id instead of api_key
+      # Confirm that Adapter correctly uses client_id instead of api_key
       credentials = %{
         "client_id" => "test_client_id",
         "secret" => "test_secret"
@@ -171,7 +171,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
 
       state = %{credentials: credentials}
 
-      {:ok, payload, _} = DeribitAdapter.generate_auth_data(state)
+      {:ok, payload, _} = Adapter.generate_auth_data(state)
       decoded = Jason.decode!(payload)
 
       assert decoded["params"]["client_id"] == "test_client_id"
@@ -179,7 +179,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
     end
 
     test "validate_credentials accepts atomified keys" do
-      # Confirm that DeribitAdapter correctly handles atom keys
+      # Confirm that Adapter correctly handles atom keys
       credentials = %{
         api_key: "test_api_key",
         secret: "test_secret"
@@ -187,7 +187,7 @@ defmodule DeribitEx.DeribitClientAuthTest do
 
       state = %{credentials: credentials}
 
-      {:ok, payload, _} = DeribitAdapter.generate_auth_data(state)
+      {:ok, payload, _} = Adapter.generate_auth_data(state)
       decoded = Jason.decode!(payload)
 
       assert decoded["params"]["client_id"] == "test_api_key"
@@ -195,26 +195,26 @@ defmodule DeribitEx.DeribitClientAuthTest do
     end
 
     test "validate_credentials reports error on missing api_key" do
-      # Confirm that DeribitAdapter correctly reports missing api_key
+      # Confirm that Adapter correctly reports missing api_key
       credentials = %{
         "secret" => "test_secret"
       }
 
       state = %{credentials: credentials}
 
-      {:error, reason, _} = DeribitAdapter.generate_auth_data(state)
+      {:error, reason, _} = Adapter.generate_auth_data(state)
       assert reason == :missing_api_key
     end
 
     test "validate_credentials reports error on missing secret" do
-      # Confirm that DeribitAdapter correctly reports missing secret
+      # Confirm that Adapter correctly reports missing secret
       credentials = %{
         "api_key" => "test_api_key"
       }
 
       state = %{credentials: credentials}
 
-      {:error, reason, _} = DeribitAdapter.generate_auth_data(state)
+      {:error, reason, _} = Adapter.generate_auth_data(state)
       assert reason == :missing_api_secret
     end
   end

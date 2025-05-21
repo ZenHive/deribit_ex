@@ -1,4 +1,4 @@
-defmodule DeribitEx.DeribitClient do
+defmodule DeribitEx.Client do
   @moduledoc """
   User-friendly client interface for interacting with the Deribit WebSocket API.
 
@@ -12,45 +12,45 @@ defmodule DeribitEx.DeribitClient do
   ## Public Utility Endpoints
   ```elixir
   # Sync clocks with the server
-  {:ok, timestamp} = DeribitClient.get_time(conn)
+  {:ok, timestamp} = Client.get_time(conn)
 
   # Introduce the client to the server
-  {:ok, server_info} = DeribitClient.hello(conn, "my_bot", "1.0.0")
+  {:ok, server_info} = Client.hello(conn, "my_bot", "1.0.0")
 
   # Check system status
-  {:ok, status} = DeribitClient.status(conn)
+  {:ok, status} = Client.status(conn)
 
   # Simple connectivity test
-  {:ok, result} = DeribitClient.test(conn, "echo_me")
+  {:ok, result} = Client.test(conn, "echo_me")
   ```
 
   ## Authentication
   ```elixir
   # Authenticate with credentials from environment variables
-  {:ok, conn} = DeribitClient.authenticate(conn)
+  {:ok, conn} = Client.authenticate(conn)
 
   # Exchange token for a different subaccount
-  {:ok, _} = DeribitClient.exchange_token(conn, refresh_token, subject_id)
+  {:ok, _} = Client.exchange_token(conn, refresh_token, subject_id)
 
   # Create a named session
-  {:ok, _} = DeribitClient.fork_token(conn, refresh_token, "analytics_session")
+  {:ok, _} = Client.fork_token(conn, refresh_token, "analytics_session")
 
   # Logout
-  {:ok, conn} = DeribitClient.logout(conn)
+  {:ok, conn} = Client.logout(conn)
   ```
 
   ## Subscriptions
   ```elixir
   # Subscribe to trades for BTC-PERPETUAL
-  {:ok, sub_id} = DeribitClient.subscribe_to_trades(conn, "BTC-PERPETUAL")
+  {:ok, sub_id} = Client.subscribe_to_trades(conn, "BTC-PERPETUAL")
 
   # Subscribe to orderbook with depth=10
-  {:ok, sub_id} = DeribitClient.subscribe_to_orderbook(conn, "BTC-PERPETUAL", "100ms", 10)
+  {:ok, sub_id} = Client.subscribe_to_orderbook(conn, "BTC-PERPETUAL", "100ms", 10)
   ```
   """
 
-  alias DeribitEx.DeribitAdapter
-  alias DeribitEx.DeribitRPC
+  alias DeribitEx.Adapter
+  alias DeribitEx.RPC
   alias DeribitEx.TimeSyncService
   alias DeribitEx.TimeSyncSupervisor
   alias WebsockexNova.Client
@@ -122,19 +122,19 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Connect with default options
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # Connect with custom host
-      {:ok, conn} = DeribitClient.connect(%{host: "custom.deribit.com"})
+      {:ok, conn} = Client.connect(%{host: "custom.deribit.com"})
 
       # Connect with callback process
-      {:ok, conn} = DeribitClient.connect(%{callback_pid: self()})
+      {:ok, conn} = Client.connect(%{callback_pid: self()})
 
       # Connect with custom auth refresh threshold (5 minutes)
-      {:ok, conn} = DeribitClient.connect(%{auth_refresh_threshold: 300})
+      {:ok, conn} = Client.connect(%{auth_refresh_threshold: 300})
 
       # Connect with cautious rate limiting
-      {:ok, conn} = DeribitClient.connect(%{rate_limit_mode: :cautious})
+      {:ok, conn} = Client.connect(%{rate_limit_mode: :cautious})
   """
   @spec connect(map()) :: {:ok, pid()} | {:error, any()}
   def connect(opts \\ %{}) when is_map(opts) do
@@ -144,7 +144,7 @@ defmodule DeribitEx.DeribitClient do
     auth_refresh_threshold = get_auth_refresh_threshold(opts)
 
     # 1. Get adapter protocol defaults
-    {:ok, adapter_defaults} = DeribitAdapter.connection_info(%{})
+    {:ok, adapter_defaults} = Adapter.connection_info(%{})
 
     # 2. Merge with app-level defaults
     merged = Map.merge(adapter_defaults, @default_opts)
@@ -172,7 +172,7 @@ defmodule DeribitEx.DeribitClient do
       end
 
     # 7. Connect using the WebsockexNova client
-    case Client.connect(DeribitAdapter, merged_opts) do
+    case Client.connect(Adapter, merged_opts) do
       {:ok, conn} = result ->
         # Emit telemetry event for successful connection
         :telemetry.execute(
@@ -416,10 +416,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Authenticate using environment variables
-      {:ok, conn} = DeribitClient.authenticate(conn)
+      {:ok, conn} = Client.authenticate(conn)
 
       # Authenticate with explicit credentials
-      {:ok, conn} = DeribitClient.authenticate(conn, %{
+      {:ok, conn} = Client.authenticate(conn, %{
         api_key: "your_api_key",
         secret: "your_secret"
       })
@@ -490,10 +490,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Exchange token to switch to subaccount with ID 10
-      {:ok, response} = DeribitClient.exchange_token(conn, "refresh_token_value", 10)
+      {:ok, response} = Client.exchange_token(conn, "refresh_token_value", 10)
 
       # Exchange token using a stored refresh token
-      {:ok, response} = DeribitClient.exchange_token(conn, nil, 10)
+      {:ok, response} = Client.exchange_token(conn, nil, 10)
   """
   @spec exchange_token(pid(), String.t() | nil, integer() | String.t() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -545,10 +545,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Fork token to create a new named session
-      {:ok, response} = DeribitClient.fork_token(conn, "refresh_token_value", "trading_session")
+      {:ok, response} = Client.fork_token(conn, "refresh_token_value", "trading_session")
 
       # Fork token using a stored refresh token
-      {:ok, response} = DeribitClient.fork_token(conn, nil, "analytics_session")
+      {:ok, response} = Client.fork_token(conn, nil, "analytics_session")
   """
   @spec fork_token(pid(), String.t() | nil, String.t() | atom() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -620,13 +620,13 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Logout and invalidate all tokens
-      {:ok, conn} = DeribitClient.logout(conn)
+      {:ok, conn} = Client.logout(conn)
 
       # Logout without invalidating tokens
-      {:ok, conn} = DeribitClient.logout(conn, false)
+      {:ok, conn} = Client.logout(conn, false)
       
       # Logout with custom timeout
-      {:ok, conn} = DeribitClient.logout(conn, true, %{timeout: 30000})
+      {:ok, conn} = Client.logout(conn, true, %{timeout: 30000})
   """
   @spec logout(pid(), boolean(), map() | nil) :: {:ok, pid()} | {:error, any()}
   def logout(conn, invalidate_token \\ true, opts \\ nil) do
@@ -752,7 +752,7 @@ defmodule DeribitEx.DeribitClient do
   - `interval` - Update interval (optional, e.g., "100ms", "raw")
 
   ## Example
-      {:ok, sub_id} = DeribitClient.subscribe_to_trades(conn, "BTC-PERPETUAL", "100ms")
+      {:ok, sub_id} = Client.subscribe_to_trades(conn, "BTC-PERPETUAL", "100ms")
   """
   @spec subscribe_to_trades(pid(), String.t(), String.t(), map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -770,7 +770,7 @@ defmodule DeribitEx.DeribitClient do
   - `interval` - Update interval (optional, e.g., "100ms", "raw")
 
   ## Example
-      {:ok, sub_id} = DeribitClient.subscribe_to_ticker(conn, "BTC-PERPETUAL", "100ms")
+      {:ok, sub_id} = Client.subscribe_to_ticker(conn, "BTC-PERPETUAL", "100ms")
   """
   @spec subscribe_to_ticker(pid(), String.t(), String.t(), map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -789,7 +789,7 @@ defmodule DeribitEx.DeribitClient do
   - `depth` - Orderbook depth (optional, default is full orderbook)
 
   ## Example
-      {:ok, sub_id} = DeribitClient.subscribe_to_orderbook(conn, "BTC-PERPETUAL", "100ms", 10)
+      {:ok, sub_id} = Client.subscribe_to_orderbook(conn, "BTC-PERPETUAL", "100ms", 10)
   """
   @spec subscribe_to_orderbook(pid(), String.t(), String.t(), integer() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -814,7 +814,7 @@ defmodule DeribitEx.DeribitClient do
   - `interval` - Update interval (optional, defaults to "raw")
 
   ## Example
-      {:ok, sub_id} = DeribitClient.subscribe_to_user_orders(conn, "BTC-PERPETUAL")
+      {:ok, sub_id} = Client.subscribe_to_user_orders(conn, "BTC-PERPETUAL")
   """
   @spec subscribe_to_user_orders(pid(), String.t(), String.t(), map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -833,7 +833,7 @@ defmodule DeribitEx.DeribitClient do
   - `interval` - Update interval (optional, defaults to "raw")
 
   ## Example
-      {:ok, sub_id} = DeribitClient.subscribe_to_user_trades(conn, "BTC-PERPETUAL")
+      {:ok, sub_id} = Client.subscribe_to_user_trades(conn, "BTC-PERPETUAL")
   """
   @spec subscribe_to_user_trades(pid(), String.t(), String.t(), map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -853,7 +853,7 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Get available instruments for BTC
-      {:ok, response} = DeribitClient.json_rpc(conn, "public/get_instruments", %{
+      {:ok, response} = Client.json_rpc(conn, "public/get_instruments", %{
         currency: "BTC",
         kind: "future"
       })
@@ -862,8 +862,8 @@ defmodule DeribitEx.DeribitClient do
   def json_rpc(conn, method, params, opts \\ nil) do
     start_time = System.monotonic_time()
 
-    # Use DeribitRPC to generate a standardized request
-    {:ok, payload, request_id} = DeribitRPC.generate_request(method, params)
+    # Use RPC to generate a standardized request
+    {:ok, payload, request_id} = RPC.generate_request(method, params)
 
     case Client.send_json(conn, payload, opts) do
       {:ok, response} ->
@@ -904,15 +904,15 @@ defmodule DeribitEx.DeribitClient do
   - `{:error, error}` - On error responses
 
   ## Examples
-      iex> DeribitClient.parse_response(%{"jsonrpc" => "2.0", "id" => 1, "result" => 123})
+      iex> Client.parse_response(%{"jsonrpc" => "2.0", "id" => 1, "result" => 123})
       {:ok, 123}
 
-      iex> DeribitClient.parse_response(%{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => 10001, "message" => "Error"}})
+      iex> Client.parse_response(%{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => 10001, "message" => "Error"}})
       {:error, %{"code" => 10001, "message" => "Error"}}
   """
   @spec parse_response(map()) :: {:ok, any()} | {:error, any()}
   def parse_response(response) do
-    DeribitRPC.parse_response(response)
+    RPC.parse_response(response)
   end
 
   # @doc """
@@ -931,7 +931,7 @@ defmodule DeribitEx.DeribitClient do
 
   # ## Examples
   #     # Get the current server time
-  #     {:ok, server_time} = DeribitClient.get_time(conn)
+  #     {:ok, server_time} = Client.get_time(conn)
 
   #     # Convert to DateTime
   #     datetime = DateTime.from_unix!(div(server_time, 1000))
@@ -1026,10 +1026,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Send hello with default client info
-      {:ok, server_info} = DeribitClient.hello(conn)
+      {:ok, server_info} = Client.hello(conn)
 
       # Send hello with custom client info
-      {:ok, server_info} = DeribitClient.hello(conn, "my_trading_bot", "2.1.0")
+      {:ok, server_info} = Client.hello(conn, "my_trading_bot", "2.1.0")
   """
   @spec hello(pid(), String.t() | nil, String.t() | nil, map() | nil) ::
           {:ok, any()} | {:error, any()}
@@ -1067,10 +1067,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Check if the system is operational
-      {:ok, status} = DeribitClient.status(conn)
+      {:ok, status} = Client.status(conn)
 
       # Handle possible maintenance mode
-      case DeribitClient.status(conn) do
+      case Client.status(conn) do
         {:ok, %{"status" => "ok"}} -> # System is operational
         {:ok, %{"status" => "maintenance"}} -> # System is in maintenance mode
         {:error, reason} -> # Request failed
@@ -1101,10 +1101,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Simple connectivity test
-      {:ok, _} = DeribitClient.test(conn)
+      {:ok, _} = Client.test(conn)
 
       # Test with expected result echo
-      {:ok, "hello"} = DeribitClient.test(conn, "hello")
+      {:ok, "hello"} = Client.test(conn, "hello")
   """
   @spec test(pid(), String.t() | nil, map() | nil) :: {:ok, any()} | {:error, any()}
   def test(conn, expected_result \\ nil, opts \\ nil) do
@@ -1124,10 +1124,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Close with normal reason
-      :ok = DeribitClient.disconnect(conn)
+      :ok = Client.disconnect(conn)
 
       # Close with custom reason
-      :ok = DeribitClient.disconnect(conn, :shutdown)
+      :ok = Client.disconnect(conn, :shutdown)
   """
   @spec disconnect(pid(), any()) :: :ok
   def disconnect(conn, reason \\ :normal) do
@@ -1181,10 +1181,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Enable heartbeat with default 30 second interval
-      {:ok, _} = DeribitClient.set_heartbeat(conn)
+      {:ok, _} = Client.set_heartbeat(conn)
 
       # Enable heartbeat with custom interval
-      {:ok, _} = DeribitClient.set_heartbeat(conn, 15)
+      {:ok, _} = Client.set_heartbeat(conn, 15)
   """
   @spec set_heartbeat(pid(), pos_integer(), map() | nil) :: {:ok, String.t()} | {:error, any()}
   def set_heartbeat(conn, interval \\ 30, opts \\ nil) do
@@ -1216,7 +1216,7 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Disable heartbeat
-      {:ok, _} = DeribitClient.disable_heartbeat(conn)
+      {:ok, _} = Client.disable_heartbeat(conn)
   """
   @spec disable_heartbeat(pid(), map() | nil) :: {:ok, String.t()} | {:error, any()}
   def disable_heartbeat(conn, opts \\ nil) do
@@ -1245,10 +1245,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Enable COD for current connection only
-      {:ok, _} = DeribitClient.enable_cancel_on_disconnect(conn)
+      {:ok, _} = Client.enable_cancel_on_disconnect(conn)
 
       # Enable COD for the entire account
-      {:ok, _} = DeribitClient.enable_cancel_on_disconnect(conn, "account")
+      {:ok, _} = Client.enable_cancel_on_disconnect(conn, "account")
   """
   @spec enable_cancel_on_disconnect(pid(), String.t(), map() | nil) ::
           {:ok, String.t()} | {:error, any()}
@@ -1284,10 +1284,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Disable COD for current connection
-      {:ok, _} = DeribitClient.disable_cancel_on_disconnect(conn)
+      {:ok, _} = Client.disable_cancel_on_disconnect(conn)
 
       # Disable COD for the entire account
-      {:ok, _} = DeribitClient.disable_cancel_on_disconnect(conn, "account")
+      {:ok, _} = Client.disable_cancel_on_disconnect(conn, "account")
   """
   @spec disable_cancel_on_disconnect(pid(), String.t(), map() | nil) ::
           {:ok, String.t()} | {:error, any()}
@@ -1322,7 +1322,7 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Check if COD is enabled for the connection
-      {:ok, %{"enabled" => true, "scope" => "connection"}} = DeribitClient.get_cancel_on_disconnect(conn)
+      {:ok, %{"enabled" => true, "scope" => "connection"}} = Client.get_cancel_on_disconnect(conn)
   """
   @spec get_cancel_on_disconnect(pid(), map() | nil) :: {:ok, map()} | {:error, any()}
   def get_cancel_on_disconnect(conn, opts \\ nil) do
@@ -1364,10 +1364,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Initialize with default settings
-      {:ok, results} = DeribitClient.initialize(conn)
+      {:ok, results} = Client.initialize(conn)
 
       # Custom initialization
-      {:ok, results} = DeribitClient.initialize(conn, %{
+      {:ok, results} = Client.initialize(conn, %{
         client_name: "trading_bot",
         client_version: "2.0.0",
         heartbeat_interval: 15,
@@ -1375,7 +1375,7 @@ defmodule DeribitEx.DeribitClient do
       })
 
       # Skip authentication
-      {:ok, results} = DeribitClient.initialize(conn, %{authenticate: false})
+      {:ok, results} = Client.initialize(conn, %{authenticate: false})
   """
   @spec initialize(pid(), map() | nil) :: {:ok, map()} | {:error, atom(), any()}
   def initialize(conn, opts \\ %{}) do
@@ -1631,10 +1631,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Unsubscribe from a trades channel
-      {:ok, _} = DeribitClient.unsubscribe(conn, "trades.BTC-PERPETUAL.100ms")
+      {:ok, _} = Client.unsubscribe(conn, "trades.BTC-PERPETUAL.100ms")
 
       # Unsubscribe from multiple channels at once
-      {:ok, _} = DeribitClient.unsubscribe(conn, [
+      {:ok, _} = Client.unsubscribe(conn, [
         "trades.BTC-PERPETUAL.100ms",
         "ticker.BTC-PERPETUAL.raw"
       ])
@@ -1662,10 +1662,10 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Unsubscribe from a user orders channel
-      {:ok, _} = DeribitClient.unsubscribe_private(conn, "user.orders.BTC-PERPETUAL.raw")
+      {:ok, _} = Client.unsubscribe_private(conn, "user.orders.BTC-PERPETUAL.raw")
 
       # Unsubscribe from multiple private channels
-      {:ok, _} = DeribitClient.unsubscribe_private(conn, [
+      {:ok, _} = Client.unsubscribe_private(conn, [
         "user.orders.BTC-PERPETUAL.raw",
         "user.trades.BTC-PERPETUAL.raw"
       ])
@@ -1723,7 +1723,7 @@ defmodule DeribitEx.DeribitClient do
 
   ## Examples
       # Unsubscribe from all active channels
-      {:ok, _} = DeribitClient.unsubscribe_all(conn)
+      {:ok, _} = Client.unsubscribe_all(conn)
   """
   @spec unsubscribe_all(pid(), map() | nil) :: {:ok, String.t()} | {:error, any()}
   def unsubscribe_all(conn, opts \\ nil) do
@@ -1773,7 +1773,7 @@ defmodule DeribitEx.DeribitClient do
     
   ## Examples
       # Get the current estimated server time
-      {:ok, server_time} = DeribitClient.current_server_time(conn)
+      {:ok, server_time} = Client.current_server_time(conn)
   """
   @spec current_server_time(pid()) :: {:ok, integer()} | {:error, any()}
   def current_server_time(conn) do

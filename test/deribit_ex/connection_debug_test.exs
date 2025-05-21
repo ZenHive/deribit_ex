@@ -2,7 +2,7 @@
 #   use ExUnit.Case
 
 #   test "debug connection error" do
-#     result = DeribitEx.DeribitClient.connect(%{callback_pid: self()})
+#     result = DeribitEx.Client.connect(%{callback_pid: self()})
 #     IO.inspect(result, label: "Connection Result")
 
 #     case result do

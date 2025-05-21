@@ -1,4 +1,4 @@
-defmodule DeribitEx.DeribitRateLimitHandler do
+defmodule DeribitEx.RateLimitHandler do
   @moduledoc """
   Adaptive rate limit handler for Deribit WebSocket API.
 

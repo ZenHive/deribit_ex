@@ -1,7 +1,7 @@
 # defmodule DeribitEx.ConnectionEnvTest do
 #   use ExUnit.Case
 
-#   alias DeribitEx.DeribitClient
+#   alias DeribitEx.Client
 
 #   test "debug environment" do
 #     IO.puts("Environment:")
@@ -16,7 +16,7 @@
 
 #     # Try to connect with explicit host
 #     result1 =
-#       DeribitClient.connect(%{
+#       Client.connect(%{
 #         host: "test.deribit.com",
 #         callback_pid: self()
 #       })
@@ -24,7 +24,7 @@
 #     IO.inspect(result1, label: "Connection Result with explicit host")
 
 #     # Try with default options
-#     result2 = DeribitClient.connect()
+#     result2 = Client.connect()
 #     IO.inspect(result2, label: "Connection Result with defaults")
 
 #     assert true

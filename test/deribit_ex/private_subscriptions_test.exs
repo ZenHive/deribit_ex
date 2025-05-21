@@ -1,8 +1,8 @@
-defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
+defmodule DeribitEx.PrivateSubscriptionsTest do
   @moduledoc """
   Integration tests for private subscription endpoints against the Deribit test API.
 
-  These tests verify that all private API calls that require authentication work 
+  These tests verify that all private API calls that require authentication work
   correctly with the connection-based credential extraction, including:
   - subscribe_to_user_orders
   - subscribe_to_user_trades
@@ -18,7 +18,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   require Logger
@@ -86,14 +86,14 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
       }
 
       # Connect with both connection credentials and explicit authentication
-      {:ok, conn} = DeribitClient.connect(%{credentials: credentials})
+      {:ok, conn} = Client.connect(%{credentials: credentials})
 
       # Authenticate to make sure we're ready
-      {:ok, auth_conn} = DeribitClient.authenticate(conn, credentials)
+      {:ok, auth_conn} = Client.authenticate(conn, credentials)
 
       on_exit(fn ->
         # Clean up - disconnect
-        DeribitClient.disconnect(conn)
+        Client.disconnect(conn)
       end)
 
       # Return standard format for setup
@@ -117,7 +117,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Use JSON-RPC directly to subscribe to user orders
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [channel]
           })
 
@@ -136,7 +136,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Unsubscribe to clean up
         {:ok, _unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => [channel]
           })
       end
@@ -152,7 +152,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Use JSON-RPC directly to subscribe to user trades
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [channel]
           })
 
@@ -171,7 +171,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Unsubscribe to clean up
         {:ok, _unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => [channel]
           })
       end
@@ -187,7 +187,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # First subscribe to a private channel using JSON-RPC
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [orders_channel]
           })
 
@@ -206,7 +206,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Now unsubscribe using JSON-RPC directly (same as unsubscribe_private internally)
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => [orders_channel]
           })
 
@@ -237,7 +237,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
 
         # Subscribe to both channels in a single request
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [orders_channel, trades_channel]
           })
 
@@ -262,7 +262,7 @@ defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
         channels = [orders_channel, trades_channel]
 
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => channels
           })
 

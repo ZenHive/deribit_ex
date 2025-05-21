@@ -47,7 +47,7 @@ defmodule DeribitEx.TimeSyncSupervisor do
   Starts a new TimeSyncService for a given client connection.
 
   ## Parameters
-    * `client_pid` - The PID of the DeribitClient connection
+    * `client_pid` - The PID of the Client connection
     * `opts` - Options for the time sync service (passed to TimeSyncService.start_link/2)
 
   ## Returns
@@ -69,7 +69,7 @@ defmodule DeribitEx.TimeSyncSupervisor do
   Gets the TimeSyncService for a specific client connection.
 
   ## Parameters
-    * `client_pid` - The PID of the DeribitClient connection
+    * `client_pid` - The PID of the Client connection
 
   ## Returns
     * The name of the TimeSyncService for the given client

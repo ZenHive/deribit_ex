@@ -1,8 +1,8 @@
-defmodule DeribitEx.DeribitConnectAuthenticateTest do
+defmodule DeribitEx.ConnectAuthenticateTest do
   @moduledoc """
   Tests for the authentication functionality in the Deribit WebSocket client.
 
-  These tests verify that the DeribitClient.authenticate/3 function correctly
+  These tests verify that the Client.authenticate/3 function correctly
   extracts credentials from various sources in the following order of precedence:
 
   1. Explicitly provided credentials in the authenticate function call
@@ -16,7 +16,7 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   @tag :integration
@@ -40,12 +40,12 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
     IO.puts("Test with connection credentials present (redacted)")
 
     {:ok, conn} =
-      DeribitClient.connect(%{
+      Client.connect(%{
         credentials: credentials
       })
 
     # Authenticate using the connection's embedded credentials
-    result = DeribitClient.authenticate(conn)
+    result = Client.authenticate(conn)
     IO.puts("Authentication result (explicit connection): #{match?({:ok, _}, result)}")
 
     # Assert that authentication succeeds
@@ -65,7 +65,7 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
     end
 
     # Connect without any credentials
-    {:ok, conn} = DeribitClient.connect()
+    {:ok, conn} = Client.connect()
 
     # Authenticate with explicitly provided credentials
     credentials = %{
@@ -74,7 +74,7 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
     }
 
     IO.puts("Test with explicitly provided credentials (redacted)")
-    result = DeribitClient.authenticate(conn, credentials)
+    result = Client.authenticate(conn, credentials)
     IO.puts("Authentication result (explicit credentials): #{match?({:ok, _}, result)}")
 
     # Assert that authentication succeeds
@@ -102,14 +102,14 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
     IO.puts("Test with connection_info credentials (redacted)")
 
     {:ok, conn} =
-      DeribitClient.connect(%{
+      Client.connect(%{
         connection_info: %{
           credentials: credentials
         }
       })
 
     # Authenticate without passing credentials explicitly (should use connection_info)
-    result = DeribitClient.authenticate(conn)
+    result = Client.authenticate(conn)
     IO.puts("Authentication result (connection_info path): #{match?({:ok, _}, result)}")
 
     # Assert that authentication succeeds
@@ -132,11 +132,11 @@ defmodule DeribitEx.DeribitConnectAuthenticateTest do
     System.put_env("DERIBIT_CLIENT_SECRET", "")
 
     # Connect without specifying any credentials
-    {:ok, conn} = DeribitClient.connect()
+    {:ok, conn} = Client.connect()
 
     # Attempt to authenticate without credentials
     IO.puts("Test with no credentials available")
-    result = DeribitClient.authenticate(conn)
+    result = Client.authenticate(conn)
     IO.puts("Authentication result (empty credentials fallback): #{inspect(result)}")
 
     # We expect authentication to fail 

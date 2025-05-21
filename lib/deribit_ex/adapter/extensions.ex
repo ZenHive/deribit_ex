@@ -1,13 +1,13 @@
-defmodule DeribitEx.DeribitAdapterExtensions do
+defmodule DeribitEx.AdapterExtensions do
   @moduledoc """
-  Extensions to the DeribitAdapter for integration with token management.
+  Extensions to the Adapter for integration with token management.
 
-  This module contains the functions needed to modify DeribitAdapter 
+  This module contains the functions needed to modify Adapter 
   to integrate with the token management system without directly modifying
   the adapter itself.
 
   When MM0207 is fully integrated, these functions should be moved
-  directly into the DeribitAdapter module.
+  directly into the Adapter module.
   """
 
   alias DeribitEx.TokenManager
@@ -15,9 +15,9 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   require Logger
 
   @doc """
-  Extends DeribitAdapter.init/1 to initialize the token manager.
+  Extends Adapter.init/1 to initialize the token manager.
 
-  Call this function from DeribitAdapter.init/1 to add token manager to state.
+  Call this function from Adapter.init/1 to add token manager to state.
   """
   @spec init_with_token_manager(map()) :: map()
   def init_with_token_manager(state) do
@@ -29,9 +29,9 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   end
 
   @doc """
-  Extends DeribitAdapter.handle_auth_response/2 to integrate with token manager.
+  Extends Adapter.handle_auth_response/2 to integrate with token manager.
 
-  Call this function from DeribitAdapter.handle_auth_response/2 after state updates.
+  Call this function from Adapter.handle_auth_response/2 after state updates.
   """
   @spec update_token_manager_from_auth(map(), map()) :: map()
   def update_token_manager_from_auth(response, state) do
@@ -54,9 +54,9 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   end
 
   @doc """
-  Extends DeribitAdapter.handle_exchange_token_response/2 to integrate with token manager.
+  Extends Adapter.handle_exchange_token_response/2 to integrate with token manager.
 
-  Call this function from DeribitAdapter.handle_exchange_token_response/2 after state updates.
+  Call this function from Adapter.handle_exchange_token_response/2 after state updates.
   """
   @spec update_token_manager_from_exchange(map(), map(), map()) :: map()
   def update_token_manager_from_exchange(response, request, state) do
@@ -92,9 +92,9 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   end
 
   @doc """
-  Extends DeribitAdapter.handle_fork_token_response/2 to integrate with token manager.
+  Extends Adapter.handle_fork_token_response/2 to integrate with token manager.
 
-  Call this function from DeribitAdapter.handle_fork_token_response/2 after state updates.
+  Call this function from Adapter.handle_fork_token_response/2 after state updates.
   """
   @spec update_token_manager_from_fork(map(), map(), map()) :: map()
   def update_token_manager_from_fork(response, request, state) do
@@ -126,9 +126,9 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   end
 
   @doc """
-  Extends DeribitAdapter.handle_logout_response/2 to integrate with token manager.
+  Extends Adapter.handle_logout_response/2 to integrate with token manager.
 
-  Call this function from DeribitAdapter.handle_logout_response/2 after state updates.
+  Call this function from Adapter.handle_logout_response/2 after state updates.
   """
   @spec update_token_manager_from_logout(map()) :: map()
   def update_token_manager_from_logout(state) do
@@ -147,7 +147,7 @@ defmodule DeribitEx.DeribitAdapterExtensions do
   @doc """
   Registers a subscription with the token manager.
 
-  Call this function from DeribitAdapter.handle_subscription_response/2 after state updates.
+  Call this function from Adapter.handle_subscription_response/2 after state updates.
   """
   @spec register_subscription_with_token_manager(map(), String.t(), map(), map()) :: map()
   def register_subscription_with_token_manager(state, channel, params, _subscription_info) do

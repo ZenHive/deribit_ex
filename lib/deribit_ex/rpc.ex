@@ -1,4 +1,4 @@
-defmodule DeribitEx.DeribitRPC do
+defmodule DeribitEx.RPC do
   @moduledoc """
   Core JSON-RPC handling for Deribit WebSocket API.
 
@@ -10,7 +10,7 @@ defmodule DeribitEx.DeribitRPC do
   - Managing timeouts and retries
   - Extracting metadata from responses
 
-  This module is used by the DeribitAdapter and DeribitClient to
+  This module is used by the Adapter and Client to
   ensure consistent RPC handling and error management.
   """
 
@@ -66,7 +66,7 @@ defmodule DeribitEx.DeribitRPC do
   - `{:ok, request_payload, request_id}` - The JSON-RPC request and its ID
 
   ## Examples
-      iex> DeribitRPC.generate_request("public/get_time", %{})
+      iex> RPC.generate_request("public/get_time", %{})
       {:ok, %{"jsonrpc" => "2.0", "id" => 123, "method" => "public/get_time", "params" => %{}}, 123}
   """
   @spec generate_request(String.t(), map(), integer() | nil) :: {:ok, map(), integer()}
@@ -109,10 +109,10 @@ defmodule DeribitEx.DeribitRPC do
   - `{:error, {:invalid_response, response}}` - For invalid or unexpected responses
 
   ## Examples
-      iex> DeribitRPC.parse_response(%{"jsonrpc" => "2.0", "id" => 123, "result" => "success"})
+      iex> RPC.parse_response(%{"jsonrpc" => "2.0", "id" => 123, "result" => "success"})
       {:ok, "success"}
       
-      iex> DeribitRPC.parse_response(%{"jsonrpc" => "2.0", "id" => 123, "error" => %{"code" => 10001, "message" => "Error"}})
+      iex> RPC.parse_response(%{"jsonrpc" => "2.0", "id" => 123, "error" => %{"code" => 10001, "message" => "Error"}})
       {:error, %{"code" => 10001, "message" => "Error"}}
   """
   @spec parse_response(map()) ::
@@ -159,10 +159,10 @@ defmodule DeribitEx.DeribitRPC do
   - `false` otherwise
 
   ## Examples
-      iex> DeribitRPC.needs_reauth?(%{"code" => 13010, "message" => "Token expired"})
+      iex> RPC.needs_reauth?(%{"code" => 13010, "message" => "Token expired"})
       true
       
-      iex> DeribitRPC.needs_reauth?(%{"code" => 10001, "message" => "Invalid parameter"})
+      iex> RPC.needs_reauth?(%{"code" => 10001, "message" => "Invalid parameter"})
       false
   """
   @spec needs_reauth?(map()) :: boolean()
@@ -180,10 +180,10 @@ defmodule DeribitEx.DeribitRPC do
   - `:unknown` for unrecognized error codes
 
   ## Examples
-      iex> DeribitRPC.classify_error(%{"code" => 13010, "message" => "Token expired"})
+      iex> RPC.classify_error(%{"code" => 13010, "message" => "Token expired"})
       {:auth, :token_expired, "Token expired"}
       
-      iex> DeribitRPC.classify_error(%{"code" => 99999, "message" => "Unknown error"})
+      iex> RPC.classify_error(%{"code" => 99999, "message" => "Unknown error"})
       {:unknown, :unknown_code, "Unknown error"}
   """
   @spec classify_error(map()) :: {atom(), atom(), String.t()} | :unknown
@@ -210,10 +210,10 @@ defmodule DeribitEx.DeribitRPC do
   - `:unknown` for unclassified methods
 
   ## Examples
-      iex> DeribitRPC.method_type("public/auth")
+      iex> RPC.method_type("public/auth")
       :public
       
-      iex> DeribitRPC.method_type("private/get_position")
+      iex> RPC.method_type("private/get_position")
       :private
   """
   @spec method_type(String.t()) :: :public | :private | :unknown
@@ -232,10 +232,10 @@ defmodule DeribitEx.DeribitRPC do
   - `false` otherwise
 
   ## Examples
-      iex> DeribitRPC.requires_auth?("private/get_position")
+      iex> RPC.requires_auth?("private/get_position")
       true
       
-      iex> DeribitRPC.requires_auth?("public/get_time")
+      iex> RPC.requires_auth?("public/get_time")
       false
   """
   @spec requires_auth?(String.t()) :: boolean()
@@ -256,10 +256,10 @@ defmodule DeribitEx.DeribitRPC do
   - Original parameters map if not required or token not available
 
   ## Examples
-      iex> DeribitRPC.add_auth_params(%{}, "private/get_position", "token123")
+      iex> RPC.add_auth_params(%{}, "private/get_position", "token123")
       %{"access_token" => "token123"}
       
-      iex> DeribitRPC.add_auth_params(%{instrument: "BTC-PERPETUAL"}, "public/get_time", "token123")
+      iex> RPC.add_auth_params(%{instrument: "BTC-PERPETUAL"}, "public/get_time", "token123")
       %{instrument: "BTC-PERPETUAL"}
   """
   @spec add_auth_params(map(), String.t(), String.t() | nil) :: map()
@@ -376,7 +376,7 @@ defmodule DeribitEx.DeribitRPC do
   - Empty map if no metadata is found
 
   ## Examples
-      iex> DeribitRPC.extract_metadata(%{"jsonrpc" => "2.0", "method" => "subscription", "params" => %{"channel" => "trades.BTC-PERPETUAL.raw"}})
+      iex> RPC.extract_metadata(%{"jsonrpc" => "2.0", "method" => "subscription", "params" => %{"channel" => "trades.BTC-PERPETUAL.raw"}})
       %{channel: "trades.BTC-PERPETUAL.raw", type: :subscription}
   """
   @spec extract_metadata(map()) :: map()
@@ -415,7 +415,7 @@ defmodule DeribitEx.DeribitRPC do
   - DateTime struct representing the timestamp
 
   ## Examples
-      iex> DeribitRPC.microseconds_to_datetime(1609459200000000)
+      iex> RPC.microseconds_to_datetime(1609459200000000)
       ~U[2021-01-01 00:00:00Z]
   """
   @spec microseconds_to_datetime(integer()) :: DateTime.t()

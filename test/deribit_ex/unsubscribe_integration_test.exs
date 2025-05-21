@@ -1,4 +1,4 @@
-defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
+defmodule DeribitEx.UnsubscribeIntegrationTest do
   @moduledoc """
   Integration tests for unsubscribe endpoints against the Deribit test API.
 
@@ -12,7 +12,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
   use ExUnit.Case, async: false
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   require Logger
@@ -45,14 +45,14 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
       }
 
       # Connect with both connection credentials and explicit authentication
-      {:ok, conn} = DeribitClient.connect(%{credentials: credentials})
+      {:ok, conn} = Client.connect(%{credentials: credentials})
 
       # Authenticate to make sure we're ready
-      {:ok, auth_conn} = DeribitClient.authenticate(conn, credentials)
+      {:ok, auth_conn} = Client.authenticate(conn, credentials)
 
       on_exit(fn ->
         # Clean up - disconnect
-        DeribitClient.disconnect(conn)
+        Client.disconnect(conn)
       end)
 
       # Return standard format for setup
@@ -111,7 +111,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # First subscribe to trades channel using json_rpc
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "public/subscribe", %{
+          Client.json_rpc(conn, "public/subscribe", %{
             "channels" => [channel]
           })
 
@@ -125,7 +125,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Now unsubscribe
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "public/unsubscribe", %{
+          Client.json_rpc(conn, "public/unsubscribe", %{
             "channels" => [channel]
           })
 
@@ -183,7 +183,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Subscribe to multiple channels
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "public/subscribe", %{
+          Client.json_rpc(conn, "public/subscribe", %{
             "channels" => channels
           })
 
@@ -200,7 +200,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Unsubscribe from multiple channels
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "public/unsubscribe", %{
+          Client.json_rpc(conn, "public/unsubscribe", %{
             "channels" => channels
           })
 
@@ -258,7 +258,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # First subscribe to user orders channel
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [channel]
           })
 
@@ -277,7 +277,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Now unsubscribe
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => [channel]
           })
 
@@ -335,7 +335,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Subscribe to multiple private channels
         {:ok, sub_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => channels
           })
 
@@ -354,7 +354,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Unsubscribe from multiple channels
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => channels
           })
 
@@ -413,12 +413,12 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Subscribe to both public and private channels
         {:ok, pub_response} =
-          DeribitClient.json_rpc(conn, "public/subscribe", %{
+          Client.json_rpc(conn, "public/subscribe", %{
             "channels" => [public_channel]
           })
 
         {:ok, priv_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [private_channel]
           })
 
@@ -448,7 +448,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
         channels = [public_channel, private_channel]
 
         {:ok, unsub_response} =
-          DeribitClient.json_rpc(conn, "private/unsubscribe", %{
+          Client.json_rpc(conn, "private/unsubscribe", %{
             "channels" => channels
           })
 
@@ -512,12 +512,12 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
 
         # Subscribe to multiple channels of different types
         {:ok, pub_response} =
-          DeribitClient.json_rpc(conn, "public/subscribe", %{
+          Client.json_rpc(conn, "public/subscribe", %{
             "channels" => public_channels
           })
 
         {:ok, priv_response} =
-          DeribitClient.json_rpc(conn, "private/subscribe", %{
+          Client.json_rpc(conn, "private/subscribe", %{
             "channels" => [private_channel]
           })
 
@@ -544,7 +544,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
         :timer.sleep(1000)
 
         # Unsubscribe from all channels
-        {:ok, unsub_all_response} = DeribitClient.json_rpc(conn, "public/unsubscribe_all", %{})
+        {:ok, unsub_all_response} = Client.json_rpc(conn, "public/unsubscribe_all", %{})
 
         # Try parsing unsub_all response
         case Jason.decode(unsub_all_response) do
@@ -558,7 +558,7 @@ defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
               all_channels = public_channels ++ [private_channel]
 
               {:ok, verify_response} =
-                DeribitClient.json_rpc(conn, "public/unsubscribe", %{
+                Client.json_rpc(conn, "public/unsubscribe", %{
                   "channels" => all_channels
                 })
 

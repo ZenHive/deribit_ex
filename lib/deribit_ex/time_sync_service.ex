@@ -28,7 +28,7 @@ defmodule DeribitEx.TimeSyncService do
 
   use GenServer
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
 
   # Default synchronization interval in milliseconds (5 minutes)
   @default_sync_interval 300_000
@@ -78,7 +78,7 @@ defmodule DeribitEx.TimeSyncService do
   Starts the TimeSyncService linked to the caller.
 
   ## Parameters
-    * `client_pid` - The PID of the DeribitClient connection
+    * `client_pid` - The PID of the Client connection
     * `opts` - Options for the time sync service:
       * `:sync_interval` - Interval between time syncs in milliseconds (default: 300_000 ms / 5 minutes)
       * `:name` - Optional registration name for the server
@@ -246,8 +246,8 @@ defmodule DeribitEx.TimeSyncService do
     # Record the local time before request
     local_before = System.system_time(:millisecond)
 
-    # Get the client module - either the configured one for testing or DeribitClient
-    client_module = Application.get_env(:deribit_ex, :deribit_client_module, DeribitClient)
+    # Get the client module - either the configured one for testing or Client
+    client_module = Application.get_env(:deribit_ex, :deribit_client_module, Client)
 
     # Skip during tests or when connection isn't valid
     if is_pid(state.client_pid) and Process.alive?(state.client_pid) do

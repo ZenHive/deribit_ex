@@ -1,7 +1,7 @@
 defmodule DeribitEx.SubscriptionDebugTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
 
   require Logger
 
@@ -19,7 +19,7 @@ defmodule DeribitEx.SubscriptionDebugTest do
     Logger.info("Starting connection...")
 
     {:ok, conn} =
-      DeribitClient.connect(%{
+      Client.connect(%{
         callback_pid: test_pid,
         ws_recv_callback: callback
       })
@@ -30,7 +30,7 @@ defmodule DeribitEx.SubscriptionDebugTest do
 
     # Try a simple time request first
     Logger.info("Sending get_time request...")
-    {:ok, time_response} = DeribitClient.json_rpc(conn, "public/get_time", %{})
+    {:ok, time_response} = Client.json_rpc(conn, "public/get_time", %{})
     Logger.info("Time response: #{inspect(time_response)}")
 
     # Now try a subscription
@@ -53,7 +53,7 @@ defmodule DeribitEx.SubscriptionDebugTest do
 
     # Send the subscription directly
     {:ok, sub_response} =
-      DeribitClient.json_rpc(conn, "public/subscribe", %{
+      Client.json_rpc(conn, "public/subscribe", %{
         "channels" => [channel]
       })
 
@@ -74,6 +74,6 @@ defmodule DeribitEx.SubscriptionDebugTest do
     end
 
     # Clean up
-    DeribitClient.disconnect(conn)
+    Client.disconnect(conn)
   end
 end

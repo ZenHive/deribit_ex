@@ -1,11 +1,11 @@
-defmodule DeribitEx.DeribitRPCRequestFormatTest do
+defmodule DeribitEx.RPCRequestFormatTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitRPC
+  alias DeribitEx.RPC
 
   describe "generate_request/2" do
     test "builds a JSON-RPC request for public/get_time" do
-      {:ok, payload, id} = DeribitRPC.generate_request("public/get_time", %{})
+      {:ok, payload, id} = RPC.generate_request("public/get_time", %{})
 
       assert payload["jsonrpc"] == "2.0"
       assert payload["id"] == id
@@ -15,7 +15,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
 
     test "builds a JSON-RPC request with parameters" do
       params = %{"instrument_name" => "BTC-PERPETUAL"}
-      {:ok, payload, id} = DeribitRPC.generate_request("public/ticker", params)
+      {:ok, payload, id} = RPC.generate_request("public/ticker", params)
 
       assert payload["jsonrpc"] == "2.0"
       assert payload["id"] == id
@@ -25,7 +25,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
 
     test "merges default_params when provided" do
       # "public/hello" has defaults in @default_params
-      {:ok, payload, _} = DeribitRPC.generate_request("public/hello", %{"foo" => "bar"})
+      {:ok, payload, _} = RPC.generate_request("public/hello", %{"foo" => "bar"})
 
       # Default params should be merged with provided params
       assert payload["params"]["client_name"] == "market_maker"
@@ -35,7 +35,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
 
     test "uses passed ID when provided" do
       custom_id = 12_345
-      {:ok, payload, id} = DeribitRPC.generate_request("public/get_time", %{}, custom_id)
+      {:ok, payload, id} = RPC.generate_request("public/get_time", %{}, custom_id)
 
       assert payload["id"] == custom_id
       assert id == custom_id
@@ -44,33 +44,33 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
 
   describe "method_type/1" do
     test "identifies public methods" do
-      assert DeribitRPC.method_type("public/get_time") == :public
-      assert DeribitRPC.method_type("public/ticker") == :public
-      assert DeribitRPC.method_type("public/auth") == :public
+      assert RPC.method_type("public/get_time") == :public
+      assert RPC.method_type("public/ticker") == :public
+      assert RPC.method_type("public/auth") == :public
     end
 
     test "identifies private methods" do
-      assert DeribitRPC.method_type("private/get_position") == :private
-      assert DeribitRPC.method_type("private/buy") == :private
-      assert DeribitRPC.method_type("private/logout") == :private
+      assert RPC.method_type("private/get_position") == :private
+      assert RPC.method_type("private/buy") == :private
+      assert RPC.method_type("private/logout") == :private
     end
 
     test "marks non-standard methods as unknown" do
-      assert DeribitRPC.method_type("get_time") == :unknown
-      assert DeribitRPC.method_type("unknown/method") == :unknown
-      assert DeribitRPC.method_type(nil) == :unknown
+      assert RPC.method_type("get_time") == :unknown
+      assert RPC.method_type("unknown/method") == :unknown
+      assert RPC.method_type(nil) == :unknown
     end
   end
 
   describe "requires_auth?/1" do
     test "private methods require auth" do
-      assert DeribitRPC.requires_auth?("private/get_position") == true
-      assert DeribitRPC.requires_auth?("private/buy") == true
+      assert RPC.requires_auth?("private/get_position") == true
+      assert RPC.requires_auth?("private/buy") == true
     end
 
     test "public methods don't require auth" do
-      assert DeribitRPC.requires_auth?("public/get_time") == false
-      assert DeribitRPC.requires_auth?("public/ticker") == false
+      assert RPC.requires_auth?("public/get_time") == false
+      assert RPC.requires_auth?("public/ticker") == false
     end
   end
 
@@ -80,7 +80,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
       method = "private/get_position"
       token = "test_token"
 
-      result = DeribitRPC.add_auth_params(params, method, token)
+      result = RPC.add_auth_params(params, method, token)
       assert result == Map.put(params, "access_token", token)
     end
 
@@ -89,7 +89,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
       method = "public/get_time"
       token = "test_token"
 
-      result = DeribitRPC.add_auth_params(params, method, token)
+      result = RPC.add_auth_params(params, method, token)
       assert result == params
       refute Map.has_key?(result, "access_token")
     end
@@ -99,7 +99,7 @@ defmodule DeribitEx.DeribitRPCRequestFormatTest do
       method = "private/get_position"
       token = nil
 
-      result = DeribitRPC.add_auth_params(params, method, token)
+      result = RPC.add_auth_params(params, method, token)
       assert result == params
       refute Map.has_key?(result, "access_token")
     end

@@ -1,7 +1,7 @@
 defmodule DeribitEx.BootstrapSequenceTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   # Helper function to safely initialize with error handling for already_started
@@ -27,7 +27,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
     # Try to initialize, and handle errors gracefully
     result =
       try do
-        DeribitClient.initialize(conn, opts)
+        Client.initialize(conn, opts)
       rescue
         error ->
           case error do
@@ -102,7 +102,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
   describe "bootstrap sequence" do
     test "initialize/1 with authentication skipped succeeds" do
       # Connect to Deribit test API with time_sync disabled
-      {:ok, conn} = DeribitClient.connect(%{time_sync: %{enabled: false}})
+      {:ok, conn} = Client.connect(%{time_sync: %{enabled: false}})
 
       # Run bootstrap without authentication
       opts = %{
@@ -133,7 +133,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
       end
 
       # Clean up
-      :ok = DeribitClient.disconnect(conn)
+      :ok = Client.disconnect(conn)
     end
 
     # Tests requiring authentication
@@ -154,7 +154,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
 
         # Connect to Deribit test API with time_sync disabled and credentials
         {:ok, conn} =
-          DeribitClient.connect(%{
+          Client.connect(%{
             time_sync: %{enabled: false},
             credentials: credentials
           })
@@ -186,7 +186,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
         end
 
         # Clean up
-        :ok = DeribitClient.disconnect(conn)
+        :ok = Client.disconnect(conn)
       else
         flunk("ERROR: No credentials available! Tests MUST have credentials to run.")
       end
@@ -219,7 +219,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
 
           # Connect to Deribit test API with time_sync disabled and credentials
           {:ok, conn} =
-            DeribitClient.connect(%{
+            Client.connect(%{
               time_sync: %{enabled: false},
               credentials: credentials
             })
@@ -262,7 +262,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
           end
 
           # Clean up
-          :ok = DeribitClient.disconnect(conn)
+          :ok = Client.disconnect(conn)
         else
           flunk("ERROR: No credentials available! Tests MUST have credentials to run.")
         end
@@ -298,7 +298,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
 
           # Connect to Deribit test API with time_sync disabled and credentials
           {:ok, conn} =
-            DeribitClient.connect(%{
+            Client.connect(%{
               time_sync: %{enabled: false},
               credentials: credentials
             })
@@ -332,7 +332,7 @@ defmodule DeribitEx.BootstrapSequenceTest do
           end
 
           # Clean up
-          :ok = DeribitClient.disconnect(conn)
+          :ok = Client.disconnect(conn)
         else
           flunk("ERROR: No credentials available! Tests MUST have credentials to run.")
         end

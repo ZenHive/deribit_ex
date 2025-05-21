@@ -1,13 +1,13 @@
-defmodule DeribitEx.DeribitClientCODTest do
+defmodule DeribitEx.ClientCODTest do
   @moduledoc """
-  Unit tests for the validation logic in DeribitClient without requiring
+  Unit tests for the validation logic in Client without requiring
   actual connections. We will use the integration tests to test the actual
   API interactions.
   """
 
   use ExUnit.Case, async: true
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
 
   @moduletag :unit
   @moduletag :cod
@@ -18,7 +18,7 @@ defmodule DeribitEx.DeribitClientCODTest do
       fake_conn = self()
 
       assert_raise RuntimeError, ~r/Invalid scope/, fn ->
-        DeribitClient.enable_cancel_on_disconnect(fake_conn, "invalid_scope")
+        Client.enable_cancel_on_disconnect(fake_conn, "invalid_scope")
       end
     end
   end
@@ -29,7 +29,7 @@ defmodule DeribitEx.DeribitClientCODTest do
       fake_conn = self()
 
       assert_raise RuntimeError, ~r/Invalid scope/, fn ->
-        DeribitClient.disable_cancel_on_disconnect(fake_conn, "invalid_scope")
+        Client.disable_cancel_on_disconnect(fake_conn, "invalid_scope")
       end
     end
   end

@@ -1,4 +1,4 @@
-defmodule DeribitEx.DeribitAdapter do
+defmodule DeribitEx.Adapter do
   @moduledoc """
   WebsockexNova adapter for the Deribit WebSocket API.
 
@@ -7,7 +7,7 @@ defmodule DeribitEx.DeribitAdapter do
   """
   use WebsockexNova.Adapter
 
-  alias DeribitEx.DeribitRPC
+  alias DeribitEx.RPC
   alias WebsockexNova.Behaviors.AuthHandler
   alias WebsockexNova.Behaviors.ConnectionHandler
   alias WebsockexNova.Behaviors.SubscriptionHandler
@@ -109,7 +109,7 @@ defmodule DeribitEx.DeribitAdapter do
 
       # Rate Limiting
       # Using a custom adaptive rate limiting handler that responds to Deribit's 429 errors
-      rate_limit_handler: DeribitEx.DeribitRateLimitHandler,
+      rate_limit_handler: DeribitEx.RateLimitHandler,
       rate_limit_opts: %{
         # Three rate limit modes:
         # - :cautious - Strict limits to avoid 429s completely
@@ -284,11 +284,11 @@ defmodule DeribitEx.DeribitAdapter do
         "client_secret" => client_secret
       }
 
-      # Use the DeribitRPC module to generate the request
-      {:ok, payload, request_id} = DeribitRPC.generate_request("public/auth", auth_params)
+      # Use the RPC module to generate the request
+      {:ok, payload, request_id} = RPC.generate_request("public/auth", auth_params)
 
       # Track the request in state
-      state = DeribitRPC.track_request(state, request_id, "public/auth", auth_params)
+      state = RPC.track_request(state, request_id, "public/auth", auth_params)
 
       # No need to put credentials back in state since they're already there
       {:ok, Jason.encode!(payload), state}
@@ -472,8 +472,8 @@ defmodule DeribitEx.DeribitAdapter do
   end
 
   defp handle_token_response(%{"error" => error}, state, operation) do
-    # Use the DeribitRPC module to determine if we need to reconnect
-    reconnect_needed = DeribitRPC.needs_reauth?(error)
+    # Use the RPC module to determine if we need to reconnect
+    reconnect_needed = RPC.needs_reauth?(error)
 
     # Extract error details for telemetry
     error_code = Map.get(error, "code")
@@ -523,15 +523,15 @@ defmodule DeribitEx.DeribitAdapter do
 
     subscription_params = %{"channels" => [channel]}
 
-    # Add authentication token if needed using DeribitRPC helper
+    # Add authentication token if needed using RPC helper
     access_token = Map.get(state, :access_token)
-    subscription_params = DeribitRPC.add_auth_params(subscription_params, method, access_token)
+    subscription_params = RPC.add_auth_params(subscription_params, method, access_token)
 
     # Merge any additional parameters
     subscription_params = Map.merge(subscription_params, params || %{})
 
-    # Generate the JSON-RPC request using DeribitRPC
-    {:ok, payload, request_id} = DeribitRPC.generate_request(method, subscription_params)
+    # Generate the JSON-RPC request using RPC
+    {:ok, payload, request_id} = RPC.generate_request(method, subscription_params)
 
     # Store subscription request for tracking
     subscription_requests = Map.get(state, :subscription_requests, %{})
@@ -542,7 +542,7 @@ defmodule DeribitEx.DeribitAdapter do
     state = Map.put(state, :subscription_requests, subscription_requests)
 
     # Track the request in our general RPC request tracker as well
-    state = DeribitRPC.track_request(state, request_id, method, subscription_params)
+    state = RPC.track_request(state, request_id, method, subscription_params)
 
     {:ok, Jason.encode!(payload), state}
   end
@@ -630,10 +630,10 @@ defmodule DeribitEx.DeribitAdapter do
     test_params = Map.take(params, ["expected_result"])
 
     # Generate the JSON-RPC request
-    {:ok, payload, request_id} = DeribitRPC.generate_request("public/test", test_params)
+    {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "public/test", test_params)
+    state = RPC.track_request(state, request_id, "public/test", test_params)
 
     # Emit telemetry for test request handling
     :telemetry.execute(
@@ -648,7 +648,7 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Log the auto-response at debug level
     Logger.debug(
-      "[DeribitAdapter] Auto-responding to test_request with public/test. " <>
+      "[Adapter] Auto-responding to test_request with public/test. " <>
         "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
     )
 
@@ -695,7 +695,7 @@ defmodule DeribitEx.DeribitAdapter do
   defp maybe_remove_tracked_request(nil, _id, state), do: state
 
   defp maybe_remove_tracked_request(_request, id, state) do
-    DeribitRPC.remove_tracked_request(state, id)
+    RPC.remove_tracked_request(state, id)
   end
 
   # Process method-specific request
@@ -733,9 +733,9 @@ defmodule DeribitEx.DeribitAdapter do
 
   # Finalize response based on result or error
   defp finalize_response(message, request, state) do
-    case DeribitRPC.parse_response(message) do
+    case RPC.parse_response(message) do
       {:error, error} ->
-        if request && DeribitRPC.needs_reauth?(error) do
+        if request && RPC.needs_reauth?(error) do
           # This is an auth error that requires reconnection
           {:needs_auth, message, state}
         else
@@ -791,7 +791,7 @@ defmodule DeribitEx.DeribitAdapter do
 
       request ->
         # Clean up the request from state
-        state = DeribitRPC.remove_tracked_request(state, request_id)
+        state = RPC.remove_tracked_request(state, request_id)
 
         # Emit telemetry for timeout
         :telemetry.execute(
@@ -831,12 +831,12 @@ defmodule DeribitEx.DeribitAdapter do
       "subject_id" => subject_id
     }
 
-    # Use the DeribitRPC module to generate the request
+    # Use the RPC module to generate the request
     {:ok, payload, request_id} =
-      DeribitRPC.generate_request("public/exchange_token", exchange_params)
+      RPC.generate_request("public/exchange_token", exchange_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "public/exchange_token", exchange_params)
+    state = RPC.track_request(state, request_id, "public/exchange_token", exchange_params)
 
     {:ok, Jason.encode!(payload), state}
   end
@@ -875,11 +875,11 @@ defmodule DeribitEx.DeribitAdapter do
       "session_name" => session_name
     }
 
-    # Use the DeribitRPC module to generate the request
-    {:ok, payload, request_id} = DeribitRPC.generate_request("public/fork_token", fork_params)
+    # Use the RPC module to generate the request
+    {:ok, payload, request_id} = RPC.generate_request("public/fork_token", fork_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "public/fork_token", fork_params)
+    state = RPC.track_request(state, request_id, "public/fork_token", fork_params)
 
     {:ok, Jason.encode!(payload), state}
   end
@@ -936,11 +936,11 @@ defmodule DeribitEx.DeribitAdapter do
       "invalidate_token" => invalidate_token
     }
 
-    # Use the DeribitRPC module to generate the request
-    {:ok, payload, request_id} = DeribitRPC.generate_request("private/logout", logout_params)
+    # Use the RPC module to generate the request
+    {:ok, payload, request_id} = RPC.generate_request("private/logout", logout_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "private/logout", logout_params)
+    state = RPC.track_request(state, request_id, "private/logout", logout_params)
 
     # Emit telemetry for logout request
     :telemetry.execute(
@@ -1042,13 +1042,13 @@ defmodule DeribitEx.DeribitAdapter do
     access_token = Map.get(state, :access_token)
 
     # Add auth token if this is a private method
-    params = DeribitRPC.add_auth_params(params, method, access_token)
+    params = RPC.add_auth_params(params, method, access_token)
 
     # Generate the JSON-RPC request
-    {:ok, payload, request_id} = DeribitRPC.generate_request(method, params)
+    {:ok, payload, request_id} = RPC.generate_request(method, params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, method, params, options)
+    state = RPC.track_request(state, request_id, method, params, options)
 
     # Set up timeout if needed
     request_timeout = Map.get(options || %{}, :timeout, state.request_timeout)
@@ -1095,13 +1095,13 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Use the numeric ID for the RPC call but track it as a string for backwards compatibility
     {:ok, payload, _} =
-      DeribitRPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
+      RPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
 
     # Convert the payload to a JSON string since that's what tests expect
     payload_json = Jason.encode!(payload)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "public/set_heartbeat", heartbeat_params)
+    state = RPC.track_request(state, request_id, "public/set_heartbeat", heartbeat_params)
 
     # Update state to record that we're enabling heartbeats
     state = Map.put(state, :heartbeat_enabled, true)
@@ -1165,14 +1165,14 @@ defmodule DeribitEx.DeribitAdapter do
     request_id = System.unique_integer([:positive])
 
     {:ok, payload, _} =
-      DeribitRPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
+      RPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
 
     # Convert the payload to a JSON string since that's what tests expect
     payload_json = Jason.encode!(payload)
 
     # Track the request in state
     state =
-      DeribitRPC.track_request(state, request_id, "public/disable_heartbeat", heartbeat_params)
+      RPC.track_request(state, request_id, "public/disable_heartbeat", heartbeat_params)
 
     {:ok, payload_json, state}
   end
@@ -1250,14 +1250,14 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Generate the JSON-RPC request
     {:ok, payload, request_id} =
-      DeribitRPC.generate_request(
+      RPC.generate_request(
         "private/enable_cancel_on_disconnect",
         cod_params
       )
 
     # Track the request in state
     state =
-      DeribitRPC.track_request(
+      RPC.track_request(
         state,
         request_id,
         "private/enable_cancel_on_disconnect",
@@ -1338,14 +1338,14 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Generate the JSON-RPC request
     {:ok, payload, request_id} =
-      DeribitRPC.generate_request(
+      RPC.generate_request(
         "private/disable_cancel_on_disconnect",
         cod_params
       )
 
     # Track the request in state
     state =
-      DeribitRPC.track_request(
+      RPC.track_request(
         state,
         request_id,
         "private/disable_cancel_on_disconnect",
@@ -1417,14 +1417,14 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Generate the JSON-RPC request
     {:ok, payload, request_id} =
-      DeribitRPC.generate_request(
+      RPC.generate_request(
         "private/get_cancel_on_disconnect",
         cod_params
       )
 
     # Track the request in state
     state =
-      DeribitRPC.track_request(
+      RPC.track_request(
         state,
         request_id,
         "private/get_cancel_on_disconnect",
@@ -1507,13 +1507,13 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Add authentication token if needed
     access_token = Map.get(state, :access_token)
-    unsubscribe_params = DeribitRPC.add_auth_params(unsubscribe_params, method, access_token)
+    unsubscribe_params = RPC.add_auth_params(unsubscribe_params, method, access_token)
 
     # Generate the JSON-RPC request
-    {:ok, payload, request_id} = DeribitRPC.generate_request(method, unsubscribe_params)
+    {:ok, payload, request_id} = RPC.generate_request(method, unsubscribe_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, method, unsubscribe_params)
+    state = RPC.track_request(state, request_id, method, unsubscribe_params)
 
     # Emit telemetry for unsubscribe request
     :telemetry.execute(
@@ -1586,11 +1586,11 @@ defmodule DeribitEx.DeribitAdapter do
 
     # Generate the JSON-RPC request
     {:ok, payload, request_id} =
-      DeribitRPC.generate_request("public/unsubscribe_all", unsubscribe_params)
+      RPC.generate_request("public/unsubscribe_all", unsubscribe_params)
 
     # Track the request in state
     state =
-      DeribitRPC.track_request(state, request_id, "public/unsubscribe_all", unsubscribe_params)
+      RPC.track_request(state, request_id, "public/unsubscribe_all", unsubscribe_params)
 
     # Emit telemetry for unsubscribe_all request
     :telemetry.execute(

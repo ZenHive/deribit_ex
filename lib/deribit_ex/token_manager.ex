@@ -10,7 +10,7 @@ defmodule DeribitEx.TokenManager do
   - Order state preservation via OrderContext
   - Channel resubscription via ResubscriptionHandler
 
-  Designed to be used by DeribitAdapter to perform token operations while
+  Designed to be used by Adapter to perform token operations while
   preserving application state.
   """
 

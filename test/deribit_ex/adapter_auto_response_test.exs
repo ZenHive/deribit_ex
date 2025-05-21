@@ -1,11 +1,11 @@
-defmodule DeribitEx.DeribitAdapterAutoResponseTest do
+defmodule DeribitEx.AdapterAutoResponseTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.Adapter
 
   describe "handle_message/2 for test_request" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
@@ -19,7 +19,7 @@ defmodule DeribitEx.DeribitAdapterAutoResponseTest do
 
       # The adapter should generate a public/test response
       {:reply, encoded_payload, state} =
-        DeribitAdapter.handle_message(test_request_message, state)
+        Adapter.handle_message(test_request_message, state)
 
       # Verify that a request for public/test was tracked in state
       # Find the request in the state requests map
@@ -50,7 +50,7 @@ defmodule DeribitEx.DeribitAdapterAutoResponseTest do
 
       # The adapter should generate a public/test response with expected_result
       {:reply, encoded_payload, state} =
-        DeribitAdapter.handle_message(test_request_message, state)
+        Adapter.handle_message(test_request_message, state)
 
       # Verify that a request for public/test was tracked in state
       request =

@@ -1,18 +1,18 @@
-defmodule DeribitEx.DeribitAdapterCODTest do
+defmodule DeribitEx.AdapterCODTest do
   use ExUnit.Case, async: true
 
-  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.Adapter
 
   describe "generate_enable_cod_data/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :access_token, "test_token")
       %{state: state}
     end
 
     test "generates correct payload with default scope", %{state: state} do
       params = %{}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_enable_cod_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_enable_cod_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -28,7 +28,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
 
     test "generates correct payload with custom scope", %{state: state} do
       params = %{"scope" => "account"}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_enable_cod_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_enable_cod_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -46,7 +46,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       params = %{"scope" => "invalid_scope"}
 
       assert_raise RuntimeError, ~r/Invalid scope for cancel_on_disconnect/, fn ->
-        DeribitAdapter.generate_enable_cod_data(params, state)
+        Adapter.generate_enable_cod_data(params, state)
       end
     end
 
@@ -55,14 +55,14 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       params = %{}
 
       assert_raise RuntimeError, ~r/Cannot enable cancel_on_disconnect/, fn ->
-        DeribitAdapter.generate_enable_cod_data(params, state)
+        Adapter.generate_enable_cod_data(params, state)
       end
     end
   end
 
   describe "handle_enable_cod_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :cod_scope, "connection")
       %{state: state}
     end
@@ -87,7 +87,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-enabled")
       end)
 
-      {:ok, updated_state} = DeribitAdapter.handle_enable_cod_response(response, state)
+      {:ok, updated_state} = Adapter.handle_enable_cod_response(response, state)
 
       # Check that state remains the same (cod_enabled was already set in generate_enable_cod_data)
       assert updated_state == state
@@ -120,7 +120,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       end)
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_enable_cod_response(response, state)
+        Adapter.handle_enable_cod_response(response, state)
 
       # Check that state was updated
       assert updated_state.cod_enabled == false
@@ -135,7 +135,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
 
   describe "generate_disable_cod_data/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       state =
         Map.merge(state, %{
@@ -149,7 +149,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
 
     test "generates correct payload with default scope", %{state: state} do
       params = %{}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_disable_cod_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_disable_cod_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -164,7 +164,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
 
     test "generates correct payload with custom scope", %{state: state} do
       params = %{"scope" => "account"}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_disable_cod_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_disable_cod_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -182,14 +182,14 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       params = %{}
 
       assert_raise RuntimeError, ~r/Cannot disable cancel_on_disconnect/, fn ->
-        DeribitAdapter.generate_disable_cod_data(params, state)
+        Adapter.generate_disable_cod_data(params, state)
       end
     end
   end
 
   describe "handle_disable_cod_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       state =
         Map.merge(state, %{
@@ -220,7 +220,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-disabled")
       end)
 
-      {:ok, updated_state} = DeribitAdapter.handle_disable_cod_response(response, state)
+      {:ok, updated_state} = Adapter.handle_disable_cod_response(response, state)
 
       # Check that state was updated
       assert updated_state.cod_enabled == false
@@ -253,7 +253,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       end)
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_disable_cod_response(response, state)
+        Adapter.handle_disable_cod_response(response, state)
 
       # Check that state remains unchanged
       assert updated_state.cod_enabled == true
@@ -268,14 +268,14 @@ defmodule DeribitEx.DeribitAdapterCODTest do
 
   describe "generate_get_cod_data/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :access_token, "test_token")
       %{state: state}
     end
 
     test "generates correct payload", %{state: state} do
       params = %{}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_get_cod_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_get_cod_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -298,14 +298,14 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       params = %{}
 
       assert_raise RuntimeError, ~r/Cannot get cancel_on_disconnect status/, fn ->
-        DeribitAdapter.generate_get_cod_data(params, state)
+        Adapter.generate_get_cod_data(params, state)
       end
     end
   end
 
   describe "handle_get_cod_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
@@ -329,7 +329,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-status")
       end)
 
-      {:ok, updated_state} = DeribitAdapter.handle_get_cod_response(response, state)
+      {:ok, updated_state} = Adapter.handle_get_cod_response(response, state)
 
       # Check that state was updated
       assert updated_state.cod_enabled == true
@@ -362,7 +362,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-status")
       end)
 
-      {:ok, updated_state} = DeribitAdapter.handle_get_cod_response(response, state)
+      {:ok, updated_state} = Adapter.handle_get_cod_response(response, state)
 
       # Check that state was updated
       assert updated_state.cod_enabled == false
@@ -397,7 +397,7 @@ defmodule DeribitEx.DeribitAdapterCODTest do
       end)
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_get_cod_response(response, state)
+        Adapter.handle_get_cod_response(response, state)
 
       # Check that state remains unchanged
       assert updated_state == state

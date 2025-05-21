@@ -1,10 +1,10 @@
-defmodule DeribitEx.DeribitClientBasicTest do
+defmodule DeribitEx.ClientBasicTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Client
 
   @doc """
-  Basic unit tests for DeribitClient module methods.
+  Basic unit tests for Client module methods.
   These tests verify function calls work correctly without requiring full WebSocket connectivity.
   """
 
@@ -12,21 +12,21 @@ defmodule DeribitEx.DeribitClientBasicTest do
     test "returns connection struct" do
       # Skip real connection test to avoid potential issues with formatted numbers
       # Just check that the client function can build a connection struct
-      alias DeribitEx.DeribitAdapter
+      alias DeribitEx.Adapter
 
       # Testing whether the adapter returns the correct connection info
-      {:ok, adapter_defaults} = DeribitAdapter.connection_info(%{})
+      {:ok, adapter_defaults} = Adapter.connection_info(%{})
 
       # Verify the adapter is properly configured
-      assert Map.get(adapter_defaults, :auth_handler) == DeribitAdapter
-      assert Map.get(adapter_defaults, :subscription_handler) == DeribitAdapter
-      assert Map.get(adapter_defaults, :message_handler) == DeribitAdapter
+      assert Map.get(adapter_defaults, :auth_handler) == Adapter
+      assert Map.get(adapter_defaults, :subscription_handler) == Adapter
+      assert Map.get(adapter_defaults, :message_handler) == Adapter
     end
 
     test "merges user options with defaults" do
       # Skip real connection test to avoid potential issues with formatted numbers
       # Just check that the client function correctly merges options instead
-      alias DeribitEx.DeribitAdapter
+      alias DeribitEx.Adapter
 
       custom_opts = %{callback_pid: self()}
 
@@ -34,7 +34,7 @@ defmodule DeribitEx.DeribitClientBasicTest do
       # We just want to verify the options merging logic
 
       # Testing whether options are properly merged without connecting
-      {:ok, adapter_defaults} = DeribitAdapter.connection_info(%{})
+      {:ok, adapter_defaults} = Adapter.connection_info(%{})
 
       # Just assert that the custom_opts would be merged with defaults
       assert Map.get(custom_opts, :callback_pid) == self()
@@ -109,10 +109,10 @@ defmodule DeribitEx.DeribitClientBasicTest do
 
   describe "disconnect/2" do
     test "accepts connection and calls close" do
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # This should not raise an error
-      assert :ok = DeribitClient.disconnect(conn)
+      assert :ok = Client.disconnect(conn)
     end
   end
 end

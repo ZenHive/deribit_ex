@@ -1,15 +1,15 @@
-defmodule DeribitEx.DeribitHeartbeatTest do
+defmodule DeribitEx.HeartbeatTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitAdapter
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Adapter
+  alias DeribitEx.Client
 
   # Setup for integration tests
   setup do
     :ok
   end
 
-  describe "DeribitAdapter heartbeat functions" do
+  describe "Adapter heartbeat functions" do
     test "generate_set_heartbeat_data/2 creates proper RPC payload" do
       # Create state for testing
       state = %{requests: %{}}
@@ -18,7 +18,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       params = %{"interval" => 30}
 
       # Generate payload
-      {:ok, payload, updated_state} = DeribitAdapter.generate_set_heartbeat_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_set_heartbeat_data(params, state)
 
       # Verify the payload is a valid JSON string
       assert is_binary(payload)
@@ -47,7 +47,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       params = %{"interval" => 5}
 
       # Generate payload
-      {:ok, payload, updated_state} = DeribitAdapter.generate_set_heartbeat_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_set_heartbeat_data(params, state)
 
       # Parse and validate
       decoded = Jason.decode!(payload)
@@ -62,7 +62,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       state = %{requests: %{}, heartbeat_enabled: true, heartbeat_interval: 30}
 
       # Generate payload
-      {:ok, payload, updated_state} = DeribitAdapter.generate_disable_heartbeat_data(%{}, state)
+      {:ok, payload, updated_state} = Adapter.generate_disable_heartbeat_data(%{}, state)
 
       # Verify the payload is a valid JSON string
       assert is_binary(payload)
@@ -88,7 +88,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       response = %{"result" => "ok"}
 
       # Process the response
-      {:ok, updated_state} = DeribitAdapter.handle_set_heartbeat_response(response, state)
+      {:ok, updated_state} = Adapter.handle_set_heartbeat_response(response, state)
 
       # State should remain the same on success
       assert updated_state == state
@@ -104,7 +104,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
 
       # Process the response
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_set_heartbeat_response(response, state)
+        Adapter.handle_set_heartbeat_response(response, state)
 
       # Error should be returned
       assert returned_error == error
@@ -121,7 +121,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       response = %{"result" => "ok"}
 
       # Process the response
-      {:ok, updated_state} = DeribitAdapter.handle_disable_heartbeat_response(response, state)
+      {:ok, updated_state} = Adapter.handle_disable_heartbeat_response(response, state)
 
       # State should update on success
       assert updated_state.heartbeat_enabled == false
@@ -138,7 +138,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
 
       # Process the response
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_disable_heartbeat_response(response, state)
+        Adapter.handle_disable_heartbeat_response(response, state)
 
       # Error should be returned
       assert returned_error == error
@@ -148,34 +148,34 @@ defmodule DeribitEx.DeribitHeartbeatTest do
     end
   end
 
-  describe "DeribitClient heartbeat methods" do
+  describe "Client heartbeat methods" do
     @tag :integration
     test "set_heartbeat/3 works with the real API" do
       # Connect to real API
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # Test the function with real API
-      result = DeribitClient.set_heartbeat(conn, 30)
+      result = Client.set_heartbeat(conn, 30)
       assert match?({:ok, _}, result)
 
       # Close the connection
-      DeribitClient.disconnect(conn)
+      Client.disconnect(conn)
     end
 
     @tag :integration
     test "disable_heartbeat/2 works with the real API" do
       # Connect to real API
-      {:ok, conn} = DeribitClient.connect()
+      {:ok, conn} = Client.connect()
 
       # Enable heartbeat first
-      {:ok, _} = DeribitClient.set_heartbeat(conn, 30)
+      {:ok, _} = Client.set_heartbeat(conn, 30)
 
       # Test the disable function with real API
-      result = DeribitClient.disable_heartbeat(conn)
+      result = Client.disable_heartbeat(conn)
       assert match?({:ok, _}, result)
 
       # Close the connection
-      DeribitClient.disconnect(conn)
+      Client.disconnect(conn)
     end
   end
 end

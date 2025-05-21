@@ -81,7 +81,7 @@ Build a straightforward authentication flow that securely manages credentials an
 **Priority**: High
 
 **Implementation Notes**:
-- Implemented authentication endpoints in `DeribitAdapter`:
+- Implemented authentication endpoints in `Adapter`:
   - `public/auth` with `generate_auth_data/1` and `handle_auth_response/2`
   - `public/exchange_token` with `generate_exchange_token_data/2` and `handle_exchange_token_response/2`
   - `public/fork_token` with `generate_fork_token_data/2` and `handle_fork_token_response/2`
@@ -170,7 +170,7 @@ Provide straightforward utility functions with clear interfaces and minimal abst
 **Priority**: High
 
 **Implementation Notes**:
-- Created comprehensive `initialize/2` function in `DeribitClient` that performs the complete bootstrap sequence
+- Created comprehensive `initialize/2` function in `Client` that performs the complete bootstrap sequence
 - Added config support for default Cancel-On-Disconnect settings in `config.exs`
 - Leveraged existing test_request message handling in the adapter
 - Created extensive integration tests for the bootstrap sequence
@@ -190,12 +190,12 @@ Provide straightforward utility functions with clear interfaces and minimal abst
 **Description**: Remove implementation of the JSON-RPC 2.0 batch request functionality from the codebase. The Deribit API documentation explicitly states that batch requests are not supported, despite this feature being part of the standard JSON-RPC 2.0 specification.
 
 **Simplicity Progression Plan**:
-1. Remove `batch_json_rpc/3` and `batch/3` functions from DeribitClient.ex
-2. Remove supporting functions for batch operations in DeribitClient.ex
-3. Remove batch request functionality documentation in DeribitClient module doc
-4. Remove `generate_batch_request/1` function from DeribitRPC.ex
-5. Remove `parse_batch_response/2` function from DeribitRPC.ex
-6. Remove `track_batch_request/4` function from DeribitRPC.ex
+1. Remove `batch_json_rpc/3` and `batch/3` functions from Client.ex
+2. Remove supporting functions for batch operations in Client.ex
+3. Remove batch request functionality documentation in Client module doc
+4. Remove `generate_batch_request/1` function from RPC.ex
+5. Remove `parse_batch_response/2` function from RPC.ex
+6. Remove `track_batch_request/4` function from RPC.ex
 7. Update documentation to reflect the removal of batch functionality
 
 **Simplicity Principle**:
@@ -211,17 +211,17 @@ Ensure codebase complies with API provider's stated limitations while maintainin
   4. Prevents users from attempting to use unsupported functionality
 
 **Requirements**:
-- Remove all batch-related functions from DeribitClient.ex
-- Remove all batch-related functions from DeribitRPC.ex
+- Remove all batch-related functions from Client.ex
+- Remove all batch-related functions from RPC.ex
 - Update documentation to reflect these changes
 
 **Status**: Completed
 **Priority**: High
 
 **Implementation Notes**:
-- Completely removed batch_json_rpc/3 and batch/3 functions from DeribitClient
+- Completely removed batch_json_rpc/3 and batch/3 functions from Client
 - Removed supporting functions: prepare_batch_requests/2, process_batch_results/2, build_id_to_op_map/2, infer_operation_from_value/2, find_operation_for_method/2
-- Removed generate_batch_request/1, parse_batch_response/2, and track_batch_request/4 from DeribitRPC
+- Removed generate_batch_request/1, parse_batch_response/2, and track_batch_request/4 from RPC
 - Updated module documentation to remove batch operation examples and references
 - Updated dialyzer function list to remove batch-related functions
 
@@ -493,8 +493,8 @@ Implement heartbeat management without adding scheduling complexity; focus on th
 - Process linking considerations
 
 **Implementation Summary**:
-1. Verified existing implementation for heartbeat endpoints in DeribitAdapter
-2. Verified client wrappers in DeribitClient
+1. Verified existing implementation for heartbeat endpoints in Adapter
+2. Verified client wrappers in Client
 3. Fixed tests to use real API integration instead of mocks following testing policy
 4. Added comprehensive testing for test_request handling
 5. Ensured proper heartbeat state tracking in the adapter
@@ -639,8 +639,8 @@ Implement Cancel-On-Disconnect functionality with minimal state tracking and con
 - Process linking considerations
 
 **Implementation Summary**:
-1. Verified existing implementation for all three COD endpoints in DeribitAdapter
-2. Verified client wrappers in DeribitClient
+1. Verified existing implementation for all three COD endpoints in Adapter
+2. Verified client wrappers in Client
 3. Created comprehensive test suite with both unit tests and integration tests
 4. Added extensive telemetry coverage for all COD operations
 5. Ensured proper state tracking in adapter for COD status and scope
@@ -825,7 +825,7 @@ Reuse existing authentication patterns with minimal specialized code.
 
 **Abstraction Evaluation**:
 - **Challenge**: Reuse the existing auth machinery without duplicating code
-- **Minimal Solution**: Add `generate_exchange_token_data/1` and `handle_exchange_token_response/2` in adapter + `DeribitClient.exchange_token/3`
+- **Minimal Solution**: Add `generate_exchange_token_data/1` and `handle_exchange_token_response/2` in adapter + `Client.exchange_token/3`
 - **Justification**:
   1. Required for subaccount switching use cases
   2. Follows same pattern as `public/auth`
@@ -984,8 +984,8 @@ Parameterize existing authentication patterns to handle token forking with minim
 - Process linking considerations
 
 **Implementation Summary**:
-1. Implemented adapter methods for the `public/fork_token` endpoint in DeribitAdapter
-2. Added client interface wrapper in DeribitClient
+1. Implemented adapter methods for the `public/fork_token` endpoint in Adapter
+2. Added client interface wrapper in Client
 3. Fixed integration tests to handle session-scope requirements
 4. Made tests resilient by gracefully skipping when tokens don't have required session scope
 5. Added comprehensive error handling and telemetry for fork token operations
@@ -1294,7 +1294,7 @@ Implement automated test_request handling with minimal overhead and zero configu
 - Process linking considerations
 
 **Implementation Summary**:
-1. Implemented `handle_message` callback for `test_request` messages in DeribitAdapter
+1. Implemented `handle_message` callback for `test_request` messages in Adapter
 2. Added automatic response with `public/test` method including parameter echo
 3. Implemented telemetry for heartbeat response monitoring
 4. Added debug-level logging for diagnostic purposes
@@ -1440,7 +1440,7 @@ Implement token and order management integration with clean abstractions and cle
 2. Developed an `OrderContext` module for preserving order state during session changes
 3. Implemented a `ResubscriptionHandler` to automate channel resubscription after token changes
 4. Built a `TokenManager` to coordinate the integration of all components
-5. Created adapter extensions that allow non-invasive integration with DeribitAdapter
+5. Created adapter extensions that allow non-invasive integration with Adapter
 6. Added comprehensive telemetry for monitoring session transitions and resubscription events
 7. Implemented extensive test coverage for all components
 

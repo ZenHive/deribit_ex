@@ -1,19 +1,19 @@
-defmodule DeribitEx.DeribitUnsubscribeTest do
+defmodule DeribitEx.UnsubscribeTest do
   use ExUnit.Case, async: true
 
-  alias DeribitEx.DeribitAdapter
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Adapter
+  alias DeribitEx.Client
 
-  describe "DeribitAdapter.generate_unsubscribe_data/2" do
+  describe "Adapter.generate_unsubscribe_data/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       state = Map.put(state, :access_token, "test_token")
       %{state: state}
     end
 
     test "generates correct public unsubscribe payload", %{state: state} do
       params = %{"channels" => ["ticker.BTC-PERPETUAL.100ms"]}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_unsubscribe_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_unsubscribe_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -30,7 +30,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
 
     test "generates correct private unsubscribe payload", %{state: state} do
       params = %{"channels" => ["user.orders.BTC-PERPETUAL.raw"]}
-      {:ok, payload, updated_state} = DeribitAdapter.generate_unsubscribe_data(params, state)
+      {:ok, payload, updated_state} = Adapter.generate_unsubscribe_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -53,7 +53,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
         ]
       }
 
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_unsubscribe_data(params, state)
+      {:ok, payload, _updated_state} = Adapter.generate_unsubscribe_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -65,7 +65,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
 
     test "handles string channel parameter by converting to list", %{state: state} do
       params = %{"channels" => "ticker.BTC-PERPETUAL.100ms"}
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_unsubscribe_data(params, state)
+      {:ok, payload, _updated_state} = Adapter.generate_unsubscribe_data(params, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -74,9 +74,9 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
     end
   end
 
-  describe "DeribitAdapter.handle_unsubscribe_response/2" do
+  describe "Adapter.handle_unsubscribe_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       # Set up initial subscriptions
       subscriptions = %{
@@ -106,7 +106,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
         }
       }
 
-      {:ok, updated_state} = DeribitAdapter.handle_unsubscribe_response(response, state)
+      {:ok, updated_state} = Adapter.handle_unsubscribe_response(response, state)
 
       # Check that the channel was removed
       refute Map.has_key?(updated_state.subscriptions, "ticker.BTC-PERPETUAL.100ms")
@@ -120,7 +120,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
       response = %{"error" => error}
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_unsubscribe_response(response, state)
+        Adapter.handle_unsubscribe_response(response, state)
 
       assert returned_error == error
       # State should remain unchanged
@@ -128,14 +128,14 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
     end
   end
 
-  describe "DeribitAdapter.generate_unsubscribe_all_data/2" do
+  describe "Adapter.generate_unsubscribe_all_data/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
       %{state: state}
     end
 
     test "generates correct unsubscribe_all payload", %{state: state} do
-      {:ok, payload, updated_state} = DeribitAdapter.generate_unsubscribe_all_data(%{}, state)
+      {:ok, payload, updated_state} = Adapter.generate_unsubscribe_all_data(%{}, state)
 
       # Decode the payload to verify its structure
       decoded = Jason.decode!(payload)
@@ -150,9 +150,9 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
     end
   end
 
-  describe "DeribitAdapter.handle_unsubscribe_all_response/2" do
+  describe "Adapter.handle_unsubscribe_all_response/2" do
     setup do
-      {:ok, state} = DeribitAdapter.init(%{})
+      {:ok, state} = Adapter.init(%{})
 
       # Set up initial subscriptions
       subscriptions = %{
@@ -178,7 +178,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
     test "clears all subscriptions from state", %{state: state} do
       response = %{"result" => "ok"}
 
-      {:ok, updated_state} = DeribitAdapter.handle_unsubscribe_all_response(response, state)
+      {:ok, updated_state} = Adapter.handle_unsubscribe_all_response(response, state)
 
       # Check that all subscriptions were removed
       assert map_size(updated_state.subscriptions) == 0
@@ -189,7 +189,7 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
       response = %{"error" => error}
 
       {:error, returned_error, updated_state} =
-        DeribitAdapter.handle_unsubscribe_all_response(response, state)
+        Adapter.handle_unsubscribe_all_response(response, state)
 
       assert returned_error == error
       # State should remain unchanged
@@ -197,33 +197,33 @@ defmodule DeribitEx.DeribitUnsubscribeTest do
     end
   end
 
-  # DeribitClient tests - these require mocking the WebsockexNova.Client behavior
+  # Client tests - these require mocking the WebsockexNova.Client behavior
   # For these tests, we'll use the provided responses and mock the Client.unsubscribe call
 
-  # Test module for DeribitClient.unsubscribe
-  describe "DeribitClient.unsubscribe/3" do
+  # Test module for Client.unsubscribe
+  describe "Client.unsubscribe/3" do
     test "calls json_rpc with correct parameters" do
       # This is a simplified test since we can't easily mock the json_rpc function
       # In a real test, we would use a mocking library to verify the function call
 
       # For now, we can just ensure the function exists and returns the expected type
-      assert function_exported?(DeribitClient, :unsubscribe, 3)
+      assert function_exported?(Client, :unsubscribe, 3)
     end
   end
 
-  # Test module for DeribitClient.unsubscribe_private
-  describe "DeribitClient.unsubscribe_private/3" do
+  # Test module for Client.unsubscribe_private
+  describe "Client.unsubscribe_private/3" do
     test "calls json_rpc with correct parameters" do
       # Simplified test for the same reason as above
-      assert function_exported?(DeribitClient, :unsubscribe_private, 3)
+      assert function_exported?(Client, :unsubscribe_private, 3)
     end
   end
 
-  # Test module for DeribitClient.unsubscribe_all
-  describe "DeribitClient.unsubscribe_all/2" do
+  # Test module for Client.unsubscribe_all
+  describe "Client.unsubscribe_all/2" do
     test "calls json_rpc with correct parameters" do
       # Simplified test for the same reason as above
-      assert function_exported?(DeribitClient, :unsubscribe_all, 2)
+      assert function_exported?(Client, :unsubscribe_all, 2)
     end
   end
 end

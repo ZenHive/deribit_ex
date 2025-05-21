@@ -1,8 +1,8 @@
 # defmodule DeribitEx.ConnectionDiagnosticTest do
 #   use ExUnit.Case, async: false
 
-#   alias DeribitEx.DeribitAdapter
-#   alias DeribitEx.DeribitClient
+#   alias DeribitEx.Adapter
+#   alias DeribitEx.Client
 #   alias WebsockexNova.Client
 
 #   @moduletag :debug
@@ -33,11 +33,11 @@
 #     }
 
 #     # Check the connection info before connecting
-#     {:ok, connection_info} = DeribitAdapter.connection_info(opts)
+#     {:ok, connection_info} = Adapter.connection_info(opts)
 #     IO.inspect(connection_info, label: "Connection Info")
 
 #     # Try to connect
-#     result = DeribitClient.connect(opts)
+#     result = Client.connect(opts)
 #     IO.inspect(result, label: "Connection Result")
 
 #     # Log error details for debugging
@@ -65,11 +65,11 @@
 #       IO.inspect(ping_result, label: "Ping Result")
 
 #       # Try a simple API call
-#       time_result = DeribitClient.get_time(conn)
+#       time_result = Client.get_time(conn)
 #       IO.inspect(time_result, label: "Get Time Result")
 
 #       # Disconnect
-#       DeribitClient.disconnect(conn)
+#       Client.disconnect(conn)
 #     end
 
 #     # Cleanup telemetry handler

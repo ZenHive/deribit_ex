@@ -50,7 +50,7 @@ config :deribit_ex,
 Or provide credentials directly when connecting:
 
 ```elixir
-{:ok, client} = DeribitEx.DeribitClient.connect(
+{:ok, client} = DeribitEx.Client.connect(
   client_id: "your_client_id",
   client_secret: "your_client_secret",
   test_mode: true
@@ -63,10 +63,10 @@ Or provide credentials directly when connecting:
 
 ```elixir
 # Connect with configured credentials
-{:ok, client} = DeribitEx.DeribitClient.connect()
+{:ok, client} = DeribitEx.Client.connect()
 
 # Or connect with explicit credentials
-{:ok, client} = DeribitEx.DeribitClient.connect(
+{:ok, client} = DeribitEx.Client.connect(
   client_id: "your_client_id",
   client_secret: "your_client_secret"
 )
@@ -76,18 +76,18 @@ Or provide credentials directly when connecting:
 
 ```elixir
 # Get available instruments
-{:ok, instruments} = DeribitEx.DeribitClient.get_instruments(client, %{
+{:ok, instruments} = DeribitEx.Client.get_instruments(client, %{
   currency: "BTC",
   kind: "future"
 })
 
 # Get account summary
-{:ok, summary} = DeribitEx.DeribitClient.get_account_summary(client, %{
+{:ok, summary} = DeribitEx.Client.get_account_summary(client, %{
   currency: "BTC"
 })
 
 # Place an order
-{:ok, order} = DeribitEx.DeribitClient.buy(client, %{
+{:ok, order} = DeribitEx.Client.buy(client, %{
   instrument_name: "BTC-PERPETUAL",
   amount: 100,
   type: "limit",
@@ -123,31 +123,31 @@ end
 {:ok, handler_pid} = MyApp.DeribitHandler.start_link([])
 
 # Subscribe to orderbook updates
-{:ok, _sub_id} = DeribitEx.DeribitClient.subscribe_book(
+{:ok, _sub_id} = DeribitEx.Client.subscribe_book(
   client,
   "BTC-PERPETUAL",
   handler_pid
 )
 
 # Subscribe to your account updates (requires authentication)
-{:ok, _sub_id} = DeribitEx.DeribitClient.subscribe_user_orders(
+{:ok, _sub_id} = DeribitEx.Client.subscribe_user_orders(
   client,
   "BTC",
   handler_pid
 )
 
 # Unsubscribe when done
-:ok = DeribitEx.DeribitClient.unsubscribe(client, sub_id)
+:ok = DeribitEx.Client.unsubscribe(client, sub_id)
 ```
 
 ### Token Management
 
 ```elixir
 # Exchange your token to access a sub-account
-{:ok, _new_client} = DeribitEx.DeribitClient.exchange_token(client, "subaccount_name")
+{:ok, _new_client} = DeribitEx.Client.exchange_token(client, "subaccount_name")
 
 # Create a named session
-{:ok, _named_client} = DeribitEx.DeribitClient.fork_token(client, "session_name")
+{:ok, _named_client} = DeribitEx.Client.fork_token(client, "session_name")
 ```
 
 ### Telemetry Events

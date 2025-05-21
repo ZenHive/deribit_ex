@@ -12,15 +12,15 @@ defmodule DeribitEx do
   - Time synchronization
   - Cancel-on-disconnect safety
 
-  The main entry point for most users will be `DeribitEx.DeribitClient`.
+  The main entry point for most users will be `DeribitEx.Client`.
 
   ## Architecture
 
   DeribitEx consists of several components:
 
-  - **DeribitClient**: High-level API interface for interacting with Deribit
-  - **DeribitRPC**: Manages JSON-RPC message formatting and parsing
-  - **DeribitAdapter**: Implements WebsockexNova adapter for WebSocket communication
+  - **Client**: High-level API interface for interacting with Deribit
+  - **RPC**: Manages JSON-RPC message formatting and parsing
+  - **Adapter**: Implements WebsockexNova adapter for WebSocket communication
   - **TokenManager**: Handles authentication token lifecycle
   - **ResubscriptionHandler**: Manages automatic channel resubscription
   - **TimeSyncService**: Synchronizes local and server time
@@ -30,18 +30,18 @@ defmodule DeribitEx do
 
   ```elixir
   # Connect to Deribit
-  {:ok, client} = DeribitEx.DeribitClient.connect(
+  {:ok, client} = DeribitEx.Client.connect(
     client_id: "your_client_id",
     client_secret: "your_client_secret"
   )
 
   # Make requests
-  {:ok, instruments} = DeribitEx.DeribitClient.get_instruments(client, %{
+  {:ok, instruments} = DeribitEx.Client.get_instruments(client, %{
     currency: "BTC"
   })
 
   # Subscribe to channels
-  {:ok, sub_id} = DeribitEx.DeribitClient.subscribe_book(
+  {:ok, sub_id} = DeribitEx.Client.subscribe_book(
     client,
     "BTC-PERPETUAL",
     self()

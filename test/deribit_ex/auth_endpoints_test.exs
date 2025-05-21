@@ -1,8 +1,8 @@
-defmodule DeribitEx.DeribitAuthEndpointsTest do
+defmodule DeribitEx.AuthEndpointsTest do
   use ExUnit.Case
 
-  alias DeribitEx.DeribitAdapter
-  alias DeribitEx.DeribitClient
+  alias DeribitEx.Adapter
+  alias DeribitEx.Client
   alias DeribitEx.Test.EnvSetup
 
   describe "authentication data generation" do
@@ -16,7 +16,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       }
 
       # Call the function
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_auth_data(state)
+      {:ok, payload, _updated_state} = Adapter.generate_auth_data(state)
 
       # Parse the JSON payload
       decoded = Jason.decode!(payload)
@@ -36,7 +36,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"subject_id" => 10}
 
       # Call the function
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_exchange_token_data(params, state)
+      {:ok, payload, _updated_state} = Adapter.generate_exchange_token_data(params, state)
 
       # Parse the JSON payload
       decoded = Jason.decode!(payload)
@@ -55,7 +55,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"session_name" => "test_session"}
 
       # Call the function
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_fork_token_data(params, state)
+      {:ok, payload, _updated_state} = Adapter.generate_fork_token_data(params, state)
 
       # Parse the JSON payload
       decoded = Jason.decode!(payload)
@@ -74,7 +74,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"invalidate_token" => false}
 
       # Call the function
-      {:ok, payload, _updated_state} = DeribitAdapter.generate_logout_data(params, state)
+      {:ok, payload, _updated_state} = Adapter.generate_logout_data(params, state)
 
       # Parse the JSON payload
       decoded = Jason.decode!(payload)
@@ -105,7 +105,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       state = %{auth_status: :unauthenticated}
 
       # Process response
-      {:ok, updated_state} = DeribitAdapter.handle_auth_response(response, state)
+      {:ok, updated_state} = Adapter.handle_auth_response(response, state)
 
       # Verify state updates
       assert updated_state.auth_status == :authenticated
@@ -132,7 +132,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       state = %{auth_status: :authenticated, access_token: "old_token"}
 
       # Process response
-      {:ok, updated_state} = DeribitAdapter.handle_exchange_token_response(response, state)
+      {:ok, updated_state} = Adapter.handle_exchange_token_response(response, state)
 
       # Verify state updates
       assert updated_state.auth_status == :authenticated
@@ -159,7 +159,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       state = %{auth_status: :authenticated, access_token: "old_token"}
 
       # Process response
-      {:ok, updated_state} = DeribitAdapter.handle_fork_token_response(response, state)
+      {:ok, updated_state} = Adapter.handle_fork_token_response(response, state)
 
       # Verify state updates
       assert updated_state.auth_status == :authenticated
@@ -185,7 +185,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       }
 
       # Process response
-      {:ok, updated_state} = DeribitAdapter.handle_logout_response(response, state)
+      {:ok, updated_state} = Adapter.handle_logout_response(response, state)
 
       # Verify state updates
       assert updated_state.auth_status == :unauthenticated
@@ -204,28 +204,28 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       state = %{auth_status: :unauthenticated}
 
       # Test all error handlers
-      {:error, _error, updated_state} = DeribitAdapter.handle_auth_response(error_response, state)
+      {:error, _error, updated_state} = Adapter.handle_auth_response(error_response, state)
       assert updated_state.auth_status == :failed
       assert updated_state.auth_error == error_response["error"]
 
       {:error, _error, updated_state} =
-        DeribitAdapter.handle_exchange_token_response(error_response, state)
+        Adapter.handle_exchange_token_response(error_response, state)
 
       assert updated_state.auth_error == error_response["error"]
 
       {:error, _error, updated_state} =
-        DeribitAdapter.handle_fork_token_response(error_response, state)
+        Adapter.handle_fork_token_response(error_response, state)
 
       assert updated_state.auth_error == error_response["error"]
 
       {:error, _error, updated_state} =
-        DeribitAdapter.handle_logout_response(error_response, state)
+        Adapter.handle_logout_response(error_response, state)
 
       assert updated_state.auth_error == error_response["error"]
     end
   end
 
-  describe "DeribitClient integration tests" do
+  describe "Client integration tests" do
     # These tests are marked with the :integration tag since they require actual API access
 
     test "client functions generate proper call parameters" do
@@ -242,7 +242,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"subject_id" => subject_id}
 
       {:ok, payload, _} =
-        DeribitAdapter.generate_exchange_token_data(params, %{refresh_token: "dummy"})
+        Adapter.generate_exchange_token_data(params, %{refresh_token: "dummy"})
 
       decoded = Jason.decode!(payload)
       assert decoded["method"] == "public/exchange_token"
@@ -252,7 +252,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"session_name" => session_name}
 
       {:ok, payload, _} =
-        DeribitAdapter.generate_fork_token_data(params, %{refresh_token: "dummy"})
+        Adapter.generate_fork_token_data(params, %{refresh_token: "dummy"})
 
       decoded = Jason.decode!(payload)
       assert decoded["method"] == "public/fork_token"
@@ -260,7 +260,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
       # For logout
       params = %{"invalidate_token" => invalidate_token}
-      {:ok, payload, _} = DeribitAdapter.generate_logout_data(params, %{access_token: "dummy"})
+      {:ok, payload, _} = Adapter.generate_logout_data(params, %{access_token: "dummy"})
       decoded = Jason.decode!(payload)
       assert decoded["method"] == "private/logout"
       assert decoded["params"]["invalidate_token"] == invalidate_token
@@ -302,7 +302,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       # The following code should compile and match the expected types:
       # connect returns {:ok, pid()}
       assert {:ok, conn} =
-               DeribitClient.connect(%{
+               Client.connect(%{
                  credentials: %{
                    api_key: api_key,
                    secret: secret
@@ -311,13 +311,13 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
       # authenticate returns {:ok, pid()}
       assert {:ok, auth_conn} =
-               DeribitClient.authenticate(conn, %{
+               Client.authenticate(conn, %{
                  api_key: api_key,
                  secret: secret
                })
 
       # logout returns {:ok, pid()} or might timeout in CI environments
-      result = DeribitClient.logout(auth_conn, true)
+      result = Client.logout(auth_conn, true)
 
       case result do
         {:ok, _conn} ->
@@ -359,7 +359,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
       # Connect to the Deribit WebSocket API
       assert {:ok, conn} =
-               DeribitClient.connect(%{
+               Client.connect(%{
                  credentials: %{
                    api_key: api_key,
                    secret: secret
@@ -368,7 +368,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
       # Authenticate to get initial tokens
       assert {:ok, auth_conn} =
-               DeribitClient.authenticate(conn, %{
+               Client.authenticate(conn, %{
                  api_key: api_key,
                  secret: secret
                })
@@ -383,7 +383,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       }
 
       # Make an explicit auth call and extract response as JSON to get the refresh token
-      {:ok, auth_response} = DeribitClient.json_rpc(conn, "public/auth", auth_params)
+      {:ok, auth_response} = Client.json_rpc(conn, "public/auth", auth_params)
 
       # Parse the refresh token from the auth response
       auth_json =
@@ -397,7 +397,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       IO.puts("Auth response structure: #{inspect(Map.keys(auth_json))}")
 
       # Parse the response to get the refresh token
-      {:ok, auth_result} = DeribitClient.parse_response(auth_json)
+      {:ok, auth_result} = Client.parse_response(auth_json)
 
       # Debug the auth result
       IO.puts("Auth result keys: #{inspect(Map.keys(auth_result))}")
@@ -431,7 +431,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
         # Execute the fork_token operation with the extracted refresh token
         IO.puts("Executing fork_token with session name: #{test_session_name}")
-        fork_result = DeribitClient.fork_token(auth_conn, refresh_token, test_session_name)
+        fork_result = Client.fork_token(auth_conn, refresh_token, test_session_name)
 
         # Validate fork result structure
         case fork_result do
@@ -452,7 +452,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
             assert is_number(parsed_response["id"])
 
             # Parse the result to ensure proper response structure
-            case DeribitClient.parse_response(parsed_response) do
+            case Client.parse_response(parsed_response) do
               {:ok, result} ->
                 # Validate that required token fields are present
                 assert Map.has_key?(result, "access_token")
@@ -476,7 +476,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
         end
 
         # Cleanup - logout to invalidate tokens
-        logout_result = DeribitClient.logout(auth_conn, true)
+        logout_result = Client.logout(auth_conn, true)
 
         # Handle potential timeouts in CI environment
         case logout_result do
@@ -531,7 +531,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
     # Connect to the Deribit WebSocket API
     assert {:ok, conn} =
-             DeribitClient.connect(%{
+             Client.connect(%{
                credentials: %{
                  api_key: api_key,
                  secret: secret
@@ -540,7 +540,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
 
     # Authenticate to get initial tokens
     assert {:ok, auth_conn} =
-             DeribitClient.authenticate(conn, %{
+             Client.authenticate(conn, %{
                api_key: api_key,
                secret: secret
              })
@@ -559,7 +559,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       params = %{"invalidate_token" => invalidate_token}
 
       # Add a custom timeout for slower CI environments
-      rpc_result = DeribitClient.json_rpc(auth_conn, "private/logout", params, %{timeout: 20_000})
+      rpc_result = Client.json_rpc(auth_conn, "private/logout", params, %{timeout: 20_000})
 
       case rpc_result do
         {:ok, response} ->
@@ -578,7 +578,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
           assert Map.has_key?(parsed_response, "id")
 
           # Check for result or error
-          case DeribitClient.parse_response(parsed_response) do
+          case Client.parse_response(parsed_response) do
             {:ok, "ok"} ->
               # Success case - expected
               assert true
@@ -613,7 +613,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
       # Reconnect with new connection for next test (since the connection is closed after logout)
       if invalidate_token == true do
         assert {:ok, conn} =
-                 DeribitClient.connect(%{
+                 Client.connect(%{
                    credentials: %{
                      api_key: api_key,
                      secret: secret
@@ -621,7 +621,7 @@ defmodule DeribitEx.DeribitAuthEndpointsTest do
                  })
 
         assert {:ok, _auth_conn} =
-                 DeribitClient.authenticate(conn, %{
+                 Client.authenticate(conn, %{
                    api_key: api_key,
                    secret: secret
                  })

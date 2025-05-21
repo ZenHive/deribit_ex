@@ -8,7 +8,7 @@ defmodule DeribitEx.ResubscriptionHandler do
   - Handling both public and private channel resubscriptions
   - Managing resubscription failures and retries
 
-  Integrates with the DeribitAdapter and DeribitClient to ensure
+  Integrates with the Adapter and Client to ensure
   subscriptions are maintained during token operations.
   """
 
