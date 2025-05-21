@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitClientBasicTest do
+defmodule DeribitEx.DeribitClientBasicTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   @doc """
   Basic unit tests for DeribitClient module methods.
@@ -12,7 +12,7 @@ defmodule MarketMaker.WS.DeribitClientBasicTest do
     test "returns connection struct" do
       # Skip real connection test to avoid potential issues with formatted numbers
       # Just check that the client function can build a connection struct
-      alias MarketMaker.WS.DeribitAdapter
+      alias DeribitEx.DeribitAdapter
 
       # Testing whether the adapter returns the correct connection info
       {:ok, adapter_defaults} = DeribitAdapter.connection_info(%{})
@@ -26,7 +26,7 @@ defmodule MarketMaker.WS.DeribitClientBasicTest do
     test "merges user options with defaults" do
       # Skip real connection test to avoid potential issues with formatted numbers
       # Just check that the client function correctly merges options instead
-      alias MarketMaker.WS.DeribitAdapter
+      alias DeribitEx.DeribitAdapter
 
       custom_opts = %{callback_pid: self()}
 

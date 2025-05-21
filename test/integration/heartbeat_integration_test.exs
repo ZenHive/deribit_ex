@@ -8,8 +8,8 @@ defmodule MarketMaker.Integration.DeribitHeartbeatIntegrationTest do
 
   use ExUnit.Case
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitClient
 
   @moduletag :integration
   @moduletag :external

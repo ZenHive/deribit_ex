@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.SimpleConnectionTest do
+defmodule DeribitEx.SimpleConnectionTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   @doc """
   Basic smoke test to verify WebSocket connection and JSON-RPC communication work.

@@ -1,7 +1,7 @@
-# defmodule MarketMaker.WS.ConnectionEnvTest do
+# defmodule DeribitEx.ConnectionEnvTest do
 #   use ExUnit.Case
 
-#   alias MarketMaker.WS.DeribitClient
+#   alias DeribitEx.DeribitClient
 
 #   test "debug environment" do
 #     IO.puts("Environment:")

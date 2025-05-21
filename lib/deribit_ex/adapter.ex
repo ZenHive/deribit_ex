@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitAdapter do
+defmodule DeribitEx.DeribitAdapter do
   @moduledoc """
   WebsockexNova adapter for the Deribit WebSocket API.
 
@@ -7,7 +7,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   """
   use WebsockexNova.Adapter
 
-  alias MarketMaker.WS.DeribitRPC
+  alias DeribitEx.DeribitRPC
   alias WebsockexNova.Behaviors.AuthHandler
   alias WebsockexNova.Behaviors.ConnectionHandler
   alias WebsockexNova.Behaviors.SubscriptionHandler
@@ -22,7 +22,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   # Uses test.deribit.com for dev/test environments and
   # www.deribit.com for production.
   defp default_host do
-    case Application.get_env(:market_maker, :env, :prod) do
+    case Application.get_env(:deribit_ex, :env, :prod) do
       :test -> "test.deribit.com"
       :dev -> "test.deribit.com"
       _ -> "www.deribit.com"
@@ -60,7 +60,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
   # Get mode from application config
   defp get_mode_from_config(valid_modes) do
-    mode = Application.get_env(:market_maker, :websocket, [])[:rate_limiting][:mode]
+    mode = Application.get_env(:deribit_ex, :websocket, [])[:rate_limiting][:mode]
     if mode in valid_modes, do: mode
   end
 
@@ -88,7 +88,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
       Map.get(opts, :auth_refresh_threshold) ||
         (System.get_env("DERIBIT_AUTH_REFRESH_THRESHOLD") &&
            "DERIBIT_AUTH_REFRESH_THRESHOLD" |> System.get_env() |> String.to_integer()) ||
-        Application.get_env(:market_maker, :websocket, [])[:auth_refresh_threshold] ||
+        Application.get_env(:deribit_ex, :websocket, [])[:auth_refresh_threshold] ||
         180
 
     defaults = %{
@@ -109,7 +109,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
       # Rate Limiting
       # Using a custom adaptive rate limiting handler that responds to Deribit's 429 errors
-      rate_limit_handler: MarketMaker.WS.DeribitRateLimitHandler,
+      rate_limit_handler: DeribitEx.DeribitRateLimitHandler,
       rate_limit_opts: %{
         # Three rate limit modes:
         # - :cautious - Strict limits to avoid 429s completely
@@ -162,7 +162,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
           recovery_interval: 5_000,
 
           # Telemetry for monitoring rate limiting behavior
-          telemetry_prefix: [:market_maker, :rate_limit]
+          telemetry_prefix: [:deribit_ex, :rate_limit]
         }
       },
 
@@ -178,7 +178,8 @@ defmodule MarketMaker.WS.DeribitAdapter do
       auth_handler: __MODULE__,
       credentials: %{
         "api_key" => System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY"),
-        "secret" => System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
+        "secret" =>
+          System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
       },
       # Set the optimal auth refresh threshold
       # Deribit tokens typically last 900 seconds (15 minutes)
@@ -210,7 +211,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Log the authentication refresh configuration
     :telemetry.execute(
-      [:market_maker, :adapter, :auth_refresh_config],
+      [:deribit_ex, :adapter, :auth_refresh_config],
       %{system_time: System.system_time()},
       %{threshold: auth_refresh_seconds}
     )
@@ -304,7 +305,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
         # Emit telemetry for credential validation failure
         :telemetry.execute(
-          [:market_maker, :adapter, :auth, :validation_failure],
+          [:deribit_ex, :adapter, :auth, :validation_failure],
           %{system_time: System.system_time()},
           %{reason: :invalid_credentials}
         )
@@ -422,7 +423,11 @@ defmodule MarketMaker.WS.DeribitAdapter do
   defp handle_token_response(
          %{
            "result" =>
-             %{"access_token" => access_token, "expires_in" => expires_in, "refresh_token" => refresh_token} = result
+             %{
+               "access_token" => access_token,
+               "expires_in" => expires_in,
+               "refresh_token" => refresh_token
+             } = result
          },
          state,
          operation
@@ -446,7 +451,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry about the tokens we received
     :telemetry.execute(
-      [:market_maker, :adapter, :token, :received],
+      [:deribit_ex, :adapter, :token, :received],
       %{system_time: System.system_time(), expires_in: expires_in},
       %{operation: operation, scope: Map.get(result, "scope")}
     )
@@ -463,7 +468,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for successful operation
     :telemetry.execute(
-      [:market_maker, :adapter, operation, :success],
+      [:deribit_ex, :adapter, operation, :success],
       %{system_time: System.system_time()},
       %{expires_in: expires_in, scope: Map.get(result, "scope")}
     )
@@ -486,7 +491,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for operation failure
     :telemetry.execute(
-      [:market_maker, :adapter, operation, :failure],
+      [:deribit_ex, :adapter, operation, :failure],
       %{system_time: System.system_time()},
       %{
         error_code: error_code,
@@ -637,7 +642,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for test request handling
     :telemetry.execute(
-      [:market_maker, :adapter, :test_request, :handled],
+      [:deribit_ex, :adapter, :test_request, :handled],
       %{system_time: System.system_time()},
       %{request_id: request_id}
     )
@@ -704,12 +709,21 @@ defmodule MarketMaker.WS.DeribitAdapter do
   defp process_method_specific_request(request, message, state) do
     case request.method do
       # Special handling for authentication methods
-      "public/auth" -> apply_response_handler(&handle_auth_response/2, message, state)
-      "public/exchange_token" -> apply_response_handler(&handle_exchange_token_response/2, message, state)
-      "public/fork_token" -> apply_response_handler(&handle_fork_token_response/2, message, state)
-      "private/logout" -> apply_response_handler(&handle_logout_response/2, message, state)
+      "public/auth" ->
+        apply_response_handler(&handle_auth_response/2, message, state)
+
+      "public/exchange_token" ->
+        apply_response_handler(&handle_exchange_token_response/2, message, state)
+
+      "public/fork_token" ->
+        apply_response_handler(&handle_fork_token_response/2, message, state)
+
+      "private/logout" ->
+        apply_response_handler(&handle_logout_response/2, message, state)
+
       # Default fallback for other methods
-      _ -> state
+      _ ->
+        state
     end
   end
 
@@ -756,7 +770,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
       :authenticated ->
         # Log that we're using the legacy refresh mechanism
         :telemetry.execute(
-          [:market_maker, :adapter, :legacy_refresh],
+          [:deribit_ex, :adapter, :legacy_refresh],
           %{system_time: System.system_time()},
           %{auth_status: state.auth_status}
         )
@@ -786,7 +800,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
         # Emit telemetry for timeout
         :telemetry.execute(
-          [:market_maker, :rpc, :timeout],
+          [:deribit_ex, :rpc, :timeout],
           %{system_time: System.system_time()},
           %{request_id: request_id, method: request.method}
         )
@@ -935,7 +949,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for logout request
     :telemetry.execute(
-      [:market_maker, :adapter, :logout, :request],
+      [:deribit_ex, :adapter, :logout, :request],
       %{system_time: System.system_time()},
       %{invalidate_token: invalidate_token}
     )
@@ -988,7 +1002,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for successful logout
     :telemetry.execute(
-      [:market_maker, :adapter, :logout, :success],
+      [:deribit_ex, :adapter, :logout, :success],
       %{system_time: System.system_time()},
       %{}
     )
@@ -1002,7 +1016,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for logout failure
     :telemetry.execute(
-      [:market_maker, :adapter, :logout, :failure],
+      [:deribit_ex, :adapter, :logout, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1050,7 +1064,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for request sent
     :telemetry.execute(
-      [:market_maker, :rpc, :request],
+      [:deribit_ex, :rpc, :request],
       %{system_time: System.system_time()},
       %{request_id: request_id, method: method}
     )
@@ -1083,7 +1097,9 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Generate the JSON-RPC request with a string ID
     request_id = to_string(System.unique_integer([:positive]))
-    {:ok, payload, _} = DeribitRPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
+
+    {:ok, payload, _} =
+      DeribitRPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
 
     # Track the request in state
     state = DeribitRPC.track_request(state, request_id, "public/set_heartbeat", heartbeat_params)
@@ -1104,7 +1120,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_set_heartbeat_response(%{"result" => "ok"}, state) do
     # Heartbeat successfully enabled, emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :heartbeat, :enabled],
+      [:deribit_ex, :adapter, :heartbeat, :enabled],
       %{system_time: System.system_time()},
       %{interval: Map.get(state, :heartbeat_interval, 30)}
     )
@@ -1118,7 +1134,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for the failure
     :telemetry.execute(
-      [:market_maker, :adapter, :heartbeat, :failure],
+      [:deribit_ex, :adapter, :heartbeat, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1148,7 +1164,9 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Generate the JSON-RPC request with a string ID
     request_id = to_string(System.unique_integer([:positive]))
-    {:ok, payload, _} = DeribitRPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
+
+    {:ok, payload, _} =
+      DeribitRPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
 
     # Track the request in state
     state =
@@ -1170,7 +1188,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :heartbeat, :disabled],
+      [:deribit_ex, :adapter, :heartbeat, :disabled],
       %{system_time: System.system_time()},
       %{}
     )
@@ -1181,7 +1199,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_disable_heartbeat_response(%{"error" => error}, state) do
     # Failed to disable heartbeat, emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :heartbeat, :failure],
+      [:deribit_ex, :adapter, :heartbeat, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1260,7 +1278,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_enable_cod_response(%{"result" => "ok"}, state) do
     # COD successfully enabled, emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :enabled],
+      [:deribit_ex, :adapter, :cod, :enabled],
       %{system_time: System.system_time()},
       %{scope: Map.get(state, :cod_scope, "connection")}
     )
@@ -1274,7 +1292,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for the failure
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :failure],
+      [:deribit_ex, :adapter, :cod, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1347,7 +1365,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :disabled],
+      [:deribit_ex, :adapter, :cod, :disabled],
       %{system_time: System.system_time()},
       %{scope: Map.get(state, :cod_scope, "connection")}
     )
@@ -1358,7 +1376,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_disable_cod_response(%{"error" => error}, state) do
     # Failed to disable COD, emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :failure],
+      [:deribit_ex, :adapter, :cod, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1431,7 +1449,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :status],
+      [:deribit_ex, :adapter, :cod, :status],
       %{system_time: System.system_time()},
       %{enabled: is_enabled, scope: scope}
     )
@@ -1442,7 +1460,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_get_cod_response(%{"error" => error}, state) do
     # Failed to get COD status, emit telemetry
     :telemetry.execute(
-      [:market_maker, :adapter, :cod, :failure],
+      [:deribit_ex, :adapter, :cod, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1479,7 +1497,8 @@ defmodule MarketMaker.WS.DeribitAdapter do
       end)
 
     # Determine whether to use private or public unsubscribe
-    method = if needs_auth && state[:access_token], do: "private/unsubscribe", else: "public/unsubscribe"
+    method =
+      if needs_auth && state[:access_token], do: "private/unsubscribe", else: "public/unsubscribe"
 
     # Create unsubscribe parameters
     unsubscribe_params = %{"channels" => channels}
@@ -1496,7 +1515,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for unsubscribe request
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe, :request],
+      [:deribit_ex, :adapter, :unsubscribe, :request],
       %{system_time: System.system_time()},
       %{channels: channels, method: method}
     )
@@ -1524,7 +1543,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for successful unsubscribe
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe, :success],
+      [:deribit_ex, :adapter, :unsubscribe, :success],
       %{system_time: System.system_time()},
       %{channels: channels, remaining_subscriptions: map_size(updated_subscriptions)}
     )
@@ -1535,7 +1554,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_unsubscribe_response(%{"error" => error}, state) do
     # Emit telemetry for unsubscribe failure
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe, :failure],
+      [:deribit_ex, :adapter, :unsubscribe, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1564,14 +1583,16 @@ defmodule MarketMaker.WS.DeribitAdapter do
     unsubscribe_params = %{}
 
     # Generate the JSON-RPC request
-    {:ok, payload, request_id} = DeribitRPC.generate_request("public/unsubscribe_all", unsubscribe_params)
+    {:ok, payload, request_id} =
+      DeribitRPC.generate_request("public/unsubscribe_all", unsubscribe_params)
 
     # Track the request in state
-    state = DeribitRPC.track_request(state, request_id, "public/unsubscribe_all", unsubscribe_params)
+    state =
+      DeribitRPC.track_request(state, request_id, "public/unsubscribe_all", unsubscribe_params)
 
     # Emit telemetry for unsubscribe_all request
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe_all, :request],
+      [:deribit_ex, :adapter, :unsubscribe_all, :request],
       %{system_time: System.system_time()},
       %{subscription_count: map_size(Map.get(state, :subscriptions, %{}))}
     )
@@ -1594,7 +1615,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry for successful unsubscribe_all
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe_all, :success],
+      [:deribit_ex, :adapter, :unsubscribe_all, :success],
       %{system_time: System.system_time()},
       %{cleared_subscription_count: subscription_count}
     )
@@ -1605,7 +1626,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_unsubscribe_all_response(%{"error" => error}, state) do
     # Emit telemetry for unsubscribe_all failure
     :telemetry.execute(
-      [:market_maker, :adapter, :unsubscribe_all, :failure],
+      [:deribit_ex, :adapter, :unsubscribe_all, :failure],
       %{system_time: System.system_time()},
       %{error: error}
     )
@@ -1629,7 +1650,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
   def handle_connect(transport, state) do
     # Emit telemetry event for connection opened
     :telemetry.execute(
-      [:market_maker, :connection, :opened],
+      [:deribit_ex, :connection, :opened],
       %{system_time: System.system_time()},
       %{transport: transport, reconnect_attempts: Map.get(state, :reconnect_attempts, 0)}
     )
@@ -1651,7 +1672,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
     if was_reconnection && Map.get(state, :auth_status) == :authenticated do
       # Log the reconnection with auth needed
       :telemetry.execute(
-        [:market_maker, :connection, :reconnect_with_auth],
+        [:deribit_ex, :connection, :reconnect_with_auth],
         %{system_time: System.system_time()},
         %{subscription_count: map_size(subscriptions)}
       )
@@ -1688,7 +1709,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
 
     # Emit telemetry event for connection closed
     :telemetry.execute(
-      [:market_maker, :connection, :closed],
+      [:deribit_ex, :connection, :closed],
       %{system_time: System.system_time()},
       %{
         reason: reason,
@@ -1714,7 +1735,7 @@ defmodule MarketMaker.WS.DeribitAdapter do
       auth_status == :authenticated &&
           (is_tuple(reason) && elem(reason, 0) == :auth_error) ->
         :telemetry.execute(
-          [:market_maker, :connection, :auth_error_reconnect],
+          [:deribit_ex, :connection, :auth_error_reconnect],
           %{system_time: System.system_time()},
           %{reason: reason}
         )

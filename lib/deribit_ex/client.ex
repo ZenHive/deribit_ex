@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitClient do
+defmodule DeribitEx.DeribitClient do
   @moduledoc """
   User-friendly client interface for interacting with the Deribit WebSocket API.
 
@@ -49,10 +49,10 @@ defmodule MarketMaker.WS.DeribitClient do
   ```
   """
 
-  alias MarketMaker.WS.DeribitAdapter
-  alias MarketMaker.WS.DeribitRPC
-  alias MarketMaker.WS.TimeSyncService
-  alias MarketMaker.WS.TimeSyncSupervisor
+  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.DeribitRPC
+  alias DeribitEx.TimeSyncService
+  alias DeribitEx.TimeSyncSupervisor
   alias WebsockexNova.Client
 
   @dialyzer {:nowarn_function,
@@ -176,7 +176,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, conn} = result ->
         # Emit telemetry event for successful connection
         :telemetry.execute(
-          [:market_maker, :client, :connect, :success],
+          [:deribit_ex, :client, :connect, :success],
           %{duration: System.monotonic_time() - start_time},
           %{
             host: Map.get(merged_opts, :host),
@@ -185,7 +185,7 @@ defmodule MarketMaker.WS.DeribitClient do
         )
 
         # Start time sync service if enabled in config
-        time_sync_config = Application.get_env(:market_maker, :websocket, [])[:time_sync] || []
+        time_sync_config = Application.get_env(:deribit_ex, :websocket, [])[:time_sync] || []
         auto_sync = Keyword.get(time_sync_config, :auto_sync_on_connect, true)
         time_sync_enabled = Keyword.get(time_sync_config, :enabled, true)
 
@@ -200,7 +200,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
           # Log time sync service start
           :telemetry.execute(
-            [:market_maker, :time_sync, :start],
+            [:deribit_ex, :time_sync, :start],
             %{system_time: System.system_time()},
             %{client_pid: conn, sync_interval: sync_interval}
           )
@@ -211,7 +211,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for connection failure
         :telemetry.execute(
-          [:market_maker, :client, :connect, :failure],
+          [:deribit_ex, :client, :connect, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{reason: reason, host: Map.get(merged_opts, :host)}
         )
@@ -262,7 +262,7 @@ defmodule MarketMaker.WS.DeribitClient do
     # From application config
     name_from_config =
       if is_nil(name_from_opts) && is_nil(name_from_env),
-        do: Application.get_env(:market_maker, :websocket, [])[:client_name]
+        do: Application.get_env(:deribit_ex, :websocket, [])[:client_name]
 
     # Use the first valid value or default
     name_from_opts || name_from_env || name_from_config || "market_maker"
@@ -287,7 +287,7 @@ defmodule MarketMaker.WS.DeribitClient do
     # From application config
     version_from_config =
       if is_nil(version_from_opts) && is_nil(version_from_env),
-        do: Application.get_env(:market_maker, :websocket, [])[:client_version]
+        do: Application.get_env(:deribit_ex, :websocket, [])[:client_version]
 
     # Use the first valid value or default
     version_from_opts || version_from_env || version_from_config || "1.0.0"
@@ -305,7 +305,7 @@ defmodule MarketMaker.WS.DeribitClient do
       invalid ->
         # Log warning about invalid value
         :telemetry.execute(
-          [:market_maker, :client, :invalid_auth_refresh],
+          [:deribit_ex, :client, :invalid_auth_refresh],
           %{system_time: System.system_time()},
           %{invalid_value: invalid}
         )
@@ -328,7 +328,7 @@ defmodule MarketMaker.WS.DeribitClient do
           _ ->
             # Log warning about invalid value
             :telemetry.execute(
-              [:market_maker, :client, :invalid_env_auth_refresh],
+              [:deribit_ex, :client, :invalid_env_auth_refresh],
               %{system_time: System.system_time()},
               %{invalid_value: env_value}
             )
@@ -340,7 +340,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
   # Get threshold from application config
   defp get_threshold_from_config do
-    config_value = Application.get_env(:market_maker, :websocket, [])[:auth_refresh_threshold]
+    config_value = Application.get_env(:deribit_ex, :websocket, [])[:auth_refresh_threshold]
 
     case config_value do
       nil ->
@@ -352,7 +352,7 @@ defmodule MarketMaker.WS.DeribitClient do
       invalid ->
         # Log warning about invalid value
         :telemetry.execute(
-          [:market_maker, :client, :invalid_config_auth_refresh],
+          [:deribit_ex, :client, :invalid_config_auth_refresh],
           %{system_time: System.system_time()},
           %{invalid_value: invalid}
         )
@@ -396,7 +396,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
   # Get mode from application config
   defp get_mode_from_config(valid_modes) do
-    mode = Application.get_env(:market_maker, :websocket, [])[:rate_limiting][:mode]
+    mode = Application.get_env(:deribit_ex, :websocket, [])[:rate_limiting][:mode]
     if mode in valid_modes, do: mode
   end
 
@@ -447,7 +447,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, new_conn, _result} ->
         # Emit telemetry event for successful authentication
         :telemetry.execute(
-          [:market_maker, :client, :authenticate, :success],
+          [:deribit_ex, :client, :authenticate, :success],
           %{duration: System.monotonic_time() - start_time},
           %{uses_env_credentials: uses_env_credentials}
         )
@@ -468,7 +468,7 @@ defmodule MarketMaker.WS.DeribitClient do
   # Private helper to emit telemetry for auth failures
   defp emit_auth_failure_telemetry(start_time, reason, uses_env_credentials) do
     :telemetry.execute(
-      [:market_maker, :client, :authenticate, :failure],
+      [:deribit_ex, :client, :authenticate, :failure],
       %{duration: System.monotonic_time() - start_time},
       %{reason: reason, uses_env_credentials: uses_env_credentials}
     )
@@ -509,7 +509,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry for successful token exchange
         :telemetry.execute(
-          [:market_maker, :client, :exchange_token, :success],
+          [:deribit_ex, :client, :exchange_token, :success],
           %{duration: System.monotonic_time() - start_time},
           %{subject_id: subject_id}
         )
@@ -520,7 +520,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry for token exchange failure
         :telemetry.execute(
-          [:market_maker, :client, :exchange_token, :failure],
+          [:deribit_ex, :client, :exchange_token, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{subject_id: subject_id, reason: reason}
         )
@@ -564,7 +564,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry for successful token fork
         :telemetry.execute(
-          [:market_maker, :client, :fork_token, :success],
+          [:deribit_ex, :client, :fork_token, :success],
           %{duration: System.monotonic_time() - start_time},
           %{session_name: session_name}
         )
@@ -575,7 +575,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry for token fork failure
         :telemetry.execute(
-          [:market_maker, :client, :fork_token, :failure],
+          [:deribit_ex, :client, :fork_token, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{session_name: session_name, reason: reason}
         )
@@ -641,7 +641,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, _response} ->
         # Emit telemetry for successful logout
         :telemetry.execute(
-          [:market_maker, :client, :logout, :success],
+          [:deribit_ex, :client, :logout, :success],
           %{duration: System.monotonic_time() - start_time},
           %{invalidate_token: invalidate_token}
         )
@@ -656,7 +656,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry for logout failure
         :telemetry.execute(
-          [:market_maker, :client, :logout, :failure],
+          [:deribit_ex, :client, :logout, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{invalidate_token: invalidate_token, reason: reason}
         )
@@ -673,7 +673,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, subscription} ->
         # Emit telemetry event for successful subscription
         :telemetry.execute(
-          [:market_maker, :client, :subscribe, :success],
+          [:deribit_ex, :client, :subscribe, :success],
           %{duration: System.monotonic_time() - start_time},
           %{channel: channel, type: type}
         )
@@ -683,7 +683,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for subscription failure
         :telemetry.execute(
-          [:market_maker, :client, :subscribe, :failure],
+          [:deribit_ex, :client, :subscribe, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{channel: channel, type: type, reason: reason}
         )
@@ -717,7 +717,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry event for successful unsubscription
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe, :success],
+          [:deribit_ex, :client, :unsubscribe, :success],
           %{duration: System.monotonic_time() - start_time},
           %{channels: channels, type: type}
         )
@@ -731,7 +731,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for unsubscription failure
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe, :failure],
+          [:deribit_ex, :client, :unsubscribe, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{channels: channels, type: type, reason: reason}
         )
@@ -866,7 +866,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry event for successful RPC call
         :telemetry.execute(
-          [:market_maker, :client, :json_rpc, :success],
+          [:deribit_ex, :client, :json_rpc, :success],
           %{duration: System.monotonic_time() - start_time},
           %{method: method, request_id: request_id}
         )
@@ -878,7 +878,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for RPC call failure
         :telemetry.execute(
-          [:market_maker, :client, :json_rpc, :failure],
+          [:deribit_ex, :client, :json_rpc, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{method: method, request_id: request_id, reason: reason}
         )
@@ -942,7 +942,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
         # Emit telemetry for the specific operation
         :telemetry.execute(
-          [:market_maker, :client, operation, :success],
+          [:deribit_ex, :client, operation, :success],
           %{duration: System.monotonic_time() - start_time},
           metadata
         )
@@ -957,7 +957,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
             # Emit telemetry for the specific operation
             :telemetry.execute(
-              [:market_maker, :client, operation, :success],
+              [:deribit_ex, :client, operation, :success],
               %{duration: System.monotonic_time() - start_time},
               metadata
             )
@@ -967,7 +967,7 @@ defmodule MarketMaker.WS.DeribitClient do
           {:error, _} = decode_error ->
             # Emit telemetry for JSON parsing failure
             :telemetry.execute(
-              [:market_maker, :client, operation, :failure],
+              [:deribit_ex, :client, operation, :failure],
               %{duration: System.monotonic_time() - start_time},
               Map.put(metadata, :reason, :json_parse_error)
             )
@@ -978,7 +978,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry for the specific operation failure
         :telemetry.execute(
-          [:market_maker, :client, operation, :failure],
+          [:deribit_ex, :client, operation, :failure],
           %{duration: System.monotonic_time() - start_time},
           Map.put(metadata, :reason, reason)
         )
@@ -1028,7 +1028,8 @@ defmodule MarketMaker.WS.DeribitClient do
       # Send hello with custom client info
       {:ok, server_info} = DeribitClient.hello(conn, "my_trading_bot", "2.1.0")
   """
-  @spec hello(pid(), String.t() | nil, String.t() | nil, map() | nil) :: {:ok, map()} | {:error, any()}
+  @spec hello(pid(), String.t() | nil, String.t() | nil, map() | nil) ::
+          {:ok, map()} | {:error, any()}
   def hello(conn, client_name \\ nil, client_version \\ nil, opts \\ nil) do
     start_time = System.monotonic_time()
     opts = opts || %{}
@@ -1129,7 +1130,7 @@ defmodule MarketMaker.WS.DeribitClient do
   def disconnect(conn, reason \\ :normal) do
     # Emit telemetry event for disconnection
     :telemetry.execute(
-      [:market_maker, :client, :disconnect],
+      [:deribit_ex, :client, :disconnect],
       %{system_time: System.system_time()},
       %{reason: reason}
     )
@@ -1146,7 +1147,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
       # Emit telemetry for time sync service stop
       :telemetry.execute(
-        [:market_maker, :time_sync, :stop],
+        [:deribit_ex, :time_sync, :stop],
         %{system_time: System.system_time()},
         %{client_pid: conn, reason: reason}
       )
@@ -1381,7 +1382,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
     # Emit telemetry for bootstrap start
     :telemetry.execute(
-      [:market_maker, :client, :bootstrap, :start],
+      [:deribit_ex, :client, :bootstrap, :start],
       %{system_time: System.system_time()},
       %{client_name: config.client_name, client_version: config.client_version}
     )
@@ -1409,10 +1410,10 @@ defmodule MarketMaker.WS.DeribitClient do
   defp initialize_config(opts) do
     # Get the configuration defaults
     config_cod_enabled =
-      Application.get_env(:market_maker, :websocket, [])[:cancel_on_disconnect][:enabled] || true
+      Application.get_env(:deribit_ex, :websocket, [])[:cancel_on_disconnect][:enabled] || true
 
     config_cod_scope =
-      Application.get_env(:market_maker, :websocket, [])[:cancel_on_disconnect][:scope] ||
+      Application.get_env(:deribit_ex, :websocket, [])[:cancel_on_disconnect][:scope] ||
         "connection"
 
     # Build config struct with all options
@@ -1429,7 +1430,7 @@ defmodule MarketMaker.WS.DeribitClient do
         Map.get(
           opts,
           :time_sync_enabled,
-          Application.get_env(:market_maker, :websocket, [])[:time_sync][:enabled] || true
+          Application.get_env(:deribit_ex, :websocket, [])[:time_sync][:enabled] || true
         )
     }
   end
@@ -1476,7 +1477,7 @@ defmodule MarketMaker.WS.DeribitClient do
 
         # Log time sync service start during initialization
       else
-        time_sync_config = Application.get_env(:market_maker, :websocket, [])[:time_sync] || []
+        time_sync_config = Application.get_env(:deribit_ex, :websocket, [])[:time_sync] || []
         sync_interval = Keyword.get(time_sync_config, :sync_interval, 300_000)
 
         {:ok, sync_pid} =
@@ -1485,7 +1486,7 @@ defmodule MarketMaker.WS.DeribitClient do
           )
 
         :telemetry.execute(
-          [:market_maker, :time_sync, :start],
+          [:deribit_ex, :time_sync, :start],
           %{system_time: System.system_time()},
           %{client_pid: conn, sync_interval: sync_interval, during_bootstrap: true}
         )
@@ -1590,7 +1591,7 @@ defmodule MarketMaker.WS.DeribitClient do
         else: Map.put(telemetry_data, :time_sync_enabled, config.time_sync_enabled)
 
     :telemetry.execute(
-      [:market_maker, :client, :bootstrap, :success],
+      [:deribit_ex, :client, :bootstrap, :success],
       %{duration: System.monotonic_time() - start_time},
       telemetry_data
     )
@@ -1599,7 +1600,7 @@ defmodule MarketMaker.WS.DeribitClient do
   # Emit telemetry for bootstrap failure
   defp emit_bootstrap_failure(step, reason, start_time) do
     :telemetry.execute(
-      [:market_maker, :client, :bootstrap, :failure],
+      [:deribit_ex, :client, :bootstrap, :failure],
       %{duration: System.monotonic_time() - start_time},
       %{step: step, reason: reason}
     )
@@ -1627,7 +1628,8 @@ defmodule MarketMaker.WS.DeribitClient do
         "ticker.BTC-PERPETUAL.raw"
       ])
   """
-  @spec unsubscribe(pid(), String.t() | [String.t()], map() | nil) :: {:ok, map()} | {:error, any()}
+  @spec unsubscribe(pid(), String.t() | [String.t()], map() | nil) ::
+          {:ok, map()} | {:error, any()}
   def unsubscribe(conn, channels, opts \\ nil) do
     unsubscribe_with_telemetry(conn, channels, opts, :public)
   end
@@ -1657,7 +1659,8 @@ defmodule MarketMaker.WS.DeribitClient do
         "user.trades.BTC-PERPETUAL.raw"
       ])
   """
-  @spec unsubscribe_private(pid(), String.t() | [String.t()], map() | nil) :: {:ok, map()} | {:error, any()}
+  @spec unsubscribe_private(pid(), String.t() | [String.t()], map() | nil) ::
+          {:ok, map()} | {:error, any()}
   def unsubscribe_private(conn, channels, opts \\ nil) do
     # Force use of the private/unsubscribe method regardless of channel type
     start_time = System.monotonic_time()
@@ -1673,7 +1676,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry event for successful unsubscription
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe, :success],
+          [:deribit_ex, :client, :unsubscribe, :success],
           %{duration: System.monotonic_time() - start_time},
           %{channels: channels, type: :private}
         )
@@ -1687,7 +1690,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for unsubscription failure
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe, :failure],
+          [:deribit_ex, :client, :unsubscribe, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{channels: channels, type: :private, reason: reason}
         )
@@ -1720,7 +1723,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:ok, response} ->
         # Emit telemetry event for successful unsubscribe_all
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe_all, :success],
+          [:deribit_ex, :client, :unsubscribe_all, :success],
           %{duration: System.monotonic_time() - start_time},
           %{}
         )
@@ -1734,7 +1737,7 @@ defmodule MarketMaker.WS.DeribitClient do
       {:error, reason} = error ->
         # Emit telemetry event for unsubscribe_all failure
         :telemetry.execute(
-          [:market_maker, :client, :unsubscribe_all, :failure],
+          [:deribit_ex, :client, :unsubscribe_all, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{reason: reason}
         )
@@ -1764,7 +1767,7 @@ defmodule MarketMaker.WS.DeribitClient do
   @spec current_server_time(pid()) :: {:ok, integer()} | {:error, any()}
   def current_server_time(conn) do
     # Check if time sync is enabled in config
-    time_sync_config = Application.get_env(:market_maker, :websocket, [])[:time_sync] || []
+    time_sync_config = Application.get_env(:deribit_ex, :websocket, [])[:time_sync] || []
     time_sync_enabled = Keyword.get(time_sync_config, :enabled, true)
 
     if time_sync_enabled do

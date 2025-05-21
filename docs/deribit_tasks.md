@@ -104,7 +104,7 @@ Step-by-Step Plan to Extract Deribit Implementation into a Standalone Library
    - Generalize functionality that's currently market_maker-specific
    - Create proper interfaces for external interaction
    - Specific components to refactor:
-     - Replace `:market_maker` configuration with `:deribit_ex` configuration
+     - Replace `:deribit_ex` configuration with `:deribit_ex` configuration
      - Ensure TimeSyncService and TimeSyncSupervisor are properly included in supervision tree
      - Update telemetry event names to use the new library namespace
      - Remove any market_maker-specific business logic that doesn't belong in the library

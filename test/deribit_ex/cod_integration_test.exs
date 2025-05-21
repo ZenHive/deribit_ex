@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitCODIntegrationTest do
+defmodule DeribitEx.DeribitCODIntegrationTest do
   @moduledoc """
   Integration tests for Cancel-On-Disconnect endpoints against the Deribit test API.
 
@@ -12,8 +12,8 @@ defmodule MarketMaker.WS.DeribitCODIntegrationTest do
 
   use ExUnit.Case, async: false
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitClient
 
   require Logger
 
@@ -27,7 +27,7 @@ defmodule MarketMaker.WS.DeribitCODIntegrationTest do
     has_credentials = EnvSetup.ensure_credentials()
 
     # Get credentials from application config
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -124,7 +124,10 @@ defmodule MarketMaker.WS.DeribitCODIntegrationTest do
 
           {:error, error} ->
             # Log permission error but don't fail the test
-            Logger.info("Skipping account scope test - insufficient permissions: #{inspect(error)}")
+            Logger.info(
+              "Skipping account scope test - insufficient permissions: #{inspect(error)}"
+            )
+
             :ok
         end
       end

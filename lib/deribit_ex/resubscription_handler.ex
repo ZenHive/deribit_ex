@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.ResubscriptionHandler do
+defmodule DeribitEx.ResubscriptionHandler do
   @moduledoc """
   Handles automatic resubscription to channels after token changes.
 
@@ -12,7 +12,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
   subscriptions are maintained during token operations.
   """
 
-  alias MarketMaker.WS.SessionContext
+  alias DeribitEx.SessionContext
   alias WebsockexNova.Client
 
   require Logger
@@ -112,7 +112,12 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
   @spec handle_session_transition(t(), SessionContext.t(), SessionContext.t()) :: {:ok, t()}
   def handle_session_transition(state, _prev_session, new_session) do
     # Set flag to resubscribe after authentication
-    updated_state = %{state | active_session_id: new_session.id, resubscribe_after_auth: true, retry_count: 0}
+    updated_state = %{
+      state
+      | active_session_id: new_session.id,
+        resubscribe_after_auth: true,
+        retry_count: 0
+    }
 
     {:ok, updated_state}
   end
@@ -142,7 +147,11 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
       # Case 2: If resubscribe is true and we have channels, do the resubscription
       state.resubscribe_after_auth && map_size(state.channels) > 0 ->
         # Mark resubscription as in progress
-        in_progress_state = %{state | resubscription_in_progress: true, resubscribe_after_auth: false}
+        in_progress_state = %{
+          state
+          | resubscription_in_progress: true,
+            resubscribe_after_auth: false
+        }
 
         # Log resubscription attempt
         channel_count = map_size(state.channels)
@@ -150,7 +159,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
 
         # Emit telemetry for resubscription start
         :telemetry.execute(
-          [:market_maker, :resubscription, :start],
+          [:deribit_ex, :resubscription, :start],
           %{timestamp: System.system_time(:millisecond)},
           %{
             channel_count: channel_count,
@@ -174,11 +183,15 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
         # Update state based on results
         if Enum.empty?(failures) do
           # Success case - all channels resubscribed
-          complete_state = %{in_progress_state | resubscription_in_progress: false, retry_count: 0}
+          complete_state = %{
+            in_progress_state
+            | resubscription_in_progress: false,
+              retry_count: 0
+          }
 
           # Emit telemetry for successful resubscription
           :telemetry.execute(
-            [:market_maker, :resubscription, :success],
+            [:deribit_ex, :resubscription, :success],
             %{timestamp: System.system_time(:millisecond)},
             %{
               channel_count: channel_count,
@@ -207,7 +220,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
 
             # Emit telemetry for retry
             :telemetry.execute(
-              [:market_maker, :resubscription, :retry],
+              [:deribit_ex, :resubscription, :retry],
               %{timestamp: System.system_time(:millisecond)},
               %{
                 failure_count: failure_count,
@@ -221,7 +234,11 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
             {:ok, retry_state, resubscription_results}
           else
             # Exceeded max retries
-            fail_state = %{state | resubscription_in_progress: false, resubscribe_after_auth: false}
+            fail_state = %{
+              state
+              | resubscription_in_progress: false,
+                resubscribe_after_auth: false
+            }
 
             # Log final failure
             Logger.error(
@@ -230,7 +247,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
 
             # Emit telemetry for final failure
             :telemetry.execute(
-              [:market_maker, :resubscription, :failure],
+              [:deribit_ex, :resubscription, :failure],
               %{timestamp: System.system_time(:millisecond)},
               %{
                 failure_count: failure_count,
@@ -283,7 +300,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
       {:ok, subscription} ->
         # Emit telemetry for successful subscription
         :telemetry.execute(
-          [:market_maker, :resubscription, :channel, :success],
+          [:deribit_ex, :resubscription, :channel, :success],
           %{duration: System.monotonic_time() - start_time},
           %{channel: channel, is_private: is_private}
         )
@@ -293,7 +310,7 @@ defmodule MarketMaker.WS.ResubscriptionHandler do
       {:error, reason} = error ->
         # Emit telemetry for failed subscription
         :telemetry.execute(
-          [:market_maker, :resubscription, :channel, :failure],
+          [:deribit_ex, :resubscription, :channel, :failure],
           %{duration: System.monotonic_time() - start_time},
           %{channel: channel, is_private: is_private, reason: reason}
         )

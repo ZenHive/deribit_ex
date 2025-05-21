@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.SessionContext do
+defmodule DeribitEx.SessionContext do
   @moduledoc """
   Manages session context and order state preservation during Deribit token operations.
 
@@ -100,7 +100,7 @@ defmodule MarketMaker.WS.SessionContext do
 
     # Emit telemetry for session creation
     :telemetry.execute(
-      [:market_maker, :session, :created],
+      [:deribit_ex, :session, :created],
       %{timestamp: now},
       %{
         session_id: session.id,
@@ -149,7 +149,7 @@ defmodule MarketMaker.WS.SessionContext do
 
     # Emit telemetry for session transition
     :telemetry.execute(
-      [:market_maker, :session, :transitioned],
+      [:deribit_ex, :session, :transitioned],
       %{timestamp: now},
       %{
         previous_session_id: inactive_session.id,
@@ -198,7 +198,7 @@ defmodule MarketMaker.WS.SessionContext do
 
     # Emit telemetry for session transition
     :telemetry.execute(
-      [:market_maker, :session, :transitioned],
+      [:deribit_ex, :session, :transitioned],
       %{timestamp: now},
       %{
         previous_session_id: inactive_session.id,
@@ -237,7 +237,7 @@ defmodule MarketMaker.WS.SessionContext do
 
     # Emit telemetry for token refresh
     :telemetry.execute(
-      [:market_maker, :session, :refreshed],
+      [:deribit_ex, :session, :refreshed],
       %{timestamp: now},
       %{
         session_id: updated_session.id
@@ -264,7 +264,7 @@ defmodule MarketMaker.WS.SessionContext do
 
     # Emit telemetry for session invalidation
     :telemetry.execute(
-      [:market_maker, :session, :invalidated],
+      [:deribit_ex, :session, :invalidated],
       %{timestamp: now},
       %{
         session_id: invalidated_session.id

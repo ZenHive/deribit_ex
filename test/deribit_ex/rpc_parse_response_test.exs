@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitRPCParseResponseTest do
+defmodule DeribitEx.DeribitRPCParseResponseTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitRPC
+  alias DeribitEx.DeribitRPC
 
   describe "parse_response/1" do
     test "returns {:ok, result} when result field present" do

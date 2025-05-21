@@ -1,8 +1,8 @@
-# defmodule MarketMaker.WS.ConnectionDebugTest do
+# defmodule DeribitEx.ConnectionDebugTest do
 #   use ExUnit.Case
 
 #   test "debug connection error" do
-#     result = MarketMaker.WS.DeribitClient.connect(%{callback_pid: self()})
+#     result = DeribitEx.DeribitClient.connect(%{callback_pid: self()})
 #     IO.inspect(result, label: "Connection Result")
 
 #     case result do

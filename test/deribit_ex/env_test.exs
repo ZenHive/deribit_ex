@@ -9,16 +9,30 @@ defmodule EnvTest do
     client_secret_env = System.get_env("DERIBIT_CLIENT_SECRET")
 
     IO.puts("Direct check: DERIBIT_CLIENT_ID = #{inspect(client_id_env)}")
-    IO.puts("Direct check: DERIBIT_CLIENT_SECRET = #{if client_secret_env, do: "[SET]", else: "nil"}")
+
+    IO.puts(
+      "Direct check: DERIBIT_CLIENT_SECRET = #{if client_secret_env, do: "[SET]", else: "nil"}"
+    )
 
     # Print environment and application config values
     IO.puts("\nEnvironment variables:")
     IO.puts("DERIBIT_CLIENT_ID: #{inspect(System.get_env("DERIBIT_CLIENT_ID"))}")
-    IO.puts("DERIBIT_CLIENT_SECRET: #{if System.get_env("DERIBIT_CLIENT_SECRET"), do: "[SET]", else: "nil"}")
+
+    IO.puts(
+      "DERIBIT_CLIENT_SECRET: #{if System.get_env("DERIBIT_CLIENT_SECRET"), do: "[SET]", else: "nil"}"
+    )
+
     IO.puts("DERIBIT_HOST: #{inspect(System.get_env("DERIBIT_HOST"))}")
-    IO.puts("DERIBIT_AUTH_REFRESH_THRESHOLD: #{inspect(System.get_env("DERIBIT_AUTH_REFRESH_THRESHOLD"))}")
+
+    IO.puts(
+      "DERIBIT_AUTH_REFRESH_THRESHOLD: #{inspect(System.get_env("DERIBIT_AUTH_REFRESH_THRESHOLD"))}"
+    )
+
     IO.puts("DERIBIT_RATE_LIMIT_MODE: #{inspect(System.get_env("DERIBIT_RATE_LIMIT_MODE"))}")
-    IO.puts("Application.get_env(:market_maker, :env): #{inspect(Application.get_env(:market_maker, :env))}")
+
+    IO.puts(
+      "Application.get_env(:deribit_ex, :env): #{inspect(Application.get_env(:deribit_ex, :env))}"
+    )
 
     IO.puts("\nDirect Environment Check:")
     IO.puts("Process PID: #{inspect(self())}")
@@ -34,12 +48,15 @@ defmodule EnvTest do
     IO.puts("DERIBIT_HOST: #{inspect(System.get_env("DERIBIT_HOST"))}")
 
     # Check application config
-    websocket_config = Application.get_env(:market_maker, :websocket, [])
-    IO.puts("Application.get_env(:market_maker, :websocket): #{inspect(websocket_config)}")
+    websocket_config = Application.get_env(:deribit_ex, :websocket, [])
+    IO.puts("Application.get_env(:deribit_ex, :websocket): #{inspect(websocket_config)}")
 
     # The real test is that credentials are in the application config
-    assert is_binary(Keyword.get(websocket_config, :client_id)), "client_id not found in application config"
-    assert is_binary(Keyword.get(websocket_config, :client_secret)), "client_secret not found in application config"
+    assert is_binary(Keyword.get(websocket_config, :client_id)),
+           "client_id not found in application config"
+
+    assert is_binary(Keyword.get(websocket_config, :client_secret)),
+           "client_secret not found in application config"
   end
 
   # Helper function to get type as string

@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitClientBatchIntegrationTest do
+defmodule DeribitEx.DeribitClientBatchIntegrationTest do
   @moduledoc """
   Note: These tests are skipped because batch request functionality
   has been removed from the codebase as Deribit API does not support
@@ -7,7 +7,7 @@ defmodule MarketMaker.WS.DeribitClientBatchIntegrationTest do
 
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   @moduletag :integration
   @moduletag :skip

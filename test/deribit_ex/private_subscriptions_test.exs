@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitPrivateSubscriptionsTest do
+defmodule DeribitEx.DeribitPrivateSubscriptionsTest do
   @moduledoc """
   Integration tests for private subscription endpoints against the Deribit test API.
 
@@ -18,8 +18,8 @@ defmodule MarketMaker.WS.DeribitPrivateSubscriptionsTest do
 
   use ExUnit.Case, async: false
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitClient
 
   require Logger
 
@@ -45,7 +45,8 @@ defmodule MarketMaker.WS.DeribitPrivateSubscriptionsTest do
           end
         else
           # Handle subscription method response messages
-          if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+          if is_map(decoded) && Map.has_key?(decoded, "method") &&
+               decoded["method"] == "subscription" do
             if is_map(decoded["params"]) && Map.has_key?(decoded["params"], "channel") do
               # Extract the channel information
               {:ok, [decoded["params"]["channel"]]}
@@ -67,7 +68,7 @@ defmodule MarketMaker.WS.DeribitPrivateSubscriptionsTest do
     has_credentials = EnvSetup.ensure_credentials()
 
     # Get credentials from application config
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -245,7 +246,9 @@ defmodule MarketMaker.WS.DeribitPrivateSubscriptionsTest do
           {:ok, subscribed_channels} ->
             assert is_list(subscribed_channels)
             # We should have at least one of our channels subscribed
-            assert Enum.any?([orders_channel, trades_channel], fn ch -> ch in subscribed_channels end)
+            assert Enum.any?([orders_channel, trades_channel], fn ch ->
+                     ch in subscribed_channels
+                   end)
 
           _ ->
             # If we can't extract the subscription result, just log and continue

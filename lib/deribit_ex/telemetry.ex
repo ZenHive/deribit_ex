@@ -1,12 +1,12 @@
 defmodule DeribitEx.Telemetry do
   @moduledoc """
   Telemetry events for the DeribitEx library.
-  
+
   This module provides a consistent interface for emitting telemetry events
   throughout the library. Use these functions instead of calling :telemetry.execute
   directly to ensure consistent event naming and metadata structure.
   """
-  
+
   @doc """
   Emits a telemetry event when a connection is established.
   """
@@ -17,7 +17,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{connection: connection}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when a connection is closed.
   """
@@ -28,7 +28,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{connection: connection, reason: reason}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when an RPC request is sent.
   """
@@ -39,7 +39,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{type: type, method: method}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when an RPC response is received.
   """
@@ -50,7 +50,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{type: type, method: method}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when authentication is successful.
   """
@@ -61,7 +61,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{connection: connection}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when authentication fails.
   """
@@ -72,7 +72,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{connection: connection, reason: reason}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when a subscription is created.
   """
@@ -83,7 +83,7 @@ defmodule DeribitEx.Telemetry do
       Map.merge(%{channel: channel}, metadata)
     )
   end
-  
+
   @doc """
   Emits a telemetry event when a subscription is removed.
   """

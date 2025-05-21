@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitAdapterCODTest do
+defmodule DeribitEx.DeribitAdapterCODTest do
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitAdapter
+  alias DeribitEx.DeribitAdapter
 
   describe "generate_enable_cod_data/2" do
     setup do
@@ -76,7 +76,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-enabled",
-          [:market_maker, :adapter, :cod, :enabled],
+          [:deribit_ex, :adapter, :cod, :enabled],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -93,7 +93,9 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       assert updated_state == state
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :enabled], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :enabled], %{system_time: _},
+                       metadata}
+
       assert metadata.scope == "connection"
     end
 
@@ -107,7 +109,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-failure",
-          [:market_maker, :adapter, :cod, :failure],
+          [:deribit_ex, :adapter, :cod, :failure],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -118,14 +120,17 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-failure")
       end)
 
-      {:error, returned_error, updated_state} = DeribitAdapter.handle_enable_cod_response(response, state)
+      {:error, returned_error, updated_state} =
+        DeribitAdapter.handle_enable_cod_response(response, state)
 
       # Check that state was updated
       assert updated_state.cod_enabled == false
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :failure], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
+                       metadata}
+
       assert metadata.error == error
     end
   end
@@ -206,7 +211,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-disabled",
-          [:market_maker, :adapter, :cod, :disabled],
+          [:deribit_ex, :adapter, :cod, :disabled],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -223,7 +228,9 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       assert updated_state.cod_enabled == false
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :disabled], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :disabled], %{system_time: _},
+                       metadata}
+
       assert metadata.scope == "connection"
     end
 
@@ -237,7 +244,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-failure",
-          [:market_maker, :adapter, :cod, :failure],
+          [:deribit_ex, :adapter, :cod, :failure],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -248,14 +255,17 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-failure")
       end)
 
-      {:error, returned_error, updated_state} = DeribitAdapter.handle_disable_cod_response(response, state)
+      {:error, returned_error, updated_state} =
+        DeribitAdapter.handle_disable_cod_response(response, state)
 
       # Check that state remains unchanged
       assert updated_state.cod_enabled == true
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :failure], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
+                       metadata}
+
       assert metadata.error == error
     end
   end
@@ -312,7 +322,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-status",
-          [:market_maker, :adapter, :cod, :status],
+          [:deribit_ex, :adapter, :cod, :status],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -330,7 +340,9 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       assert updated_state.cod_scope == "connection"
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :status], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _},
+                       metadata}
+
       assert metadata.enabled == true
       assert metadata.scope == "connection"
     end
@@ -344,7 +356,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-status",
-          [:market_maker, :adapter, :cod, :status],
+          [:deribit_ex, :adapter, :cod, :status],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -362,7 +374,9 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       assert updated_state.cod_scope == "account"
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :status], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :status], %{system_time: _},
+                       metadata}
+
       assert metadata.enabled == false
       assert metadata.scope == "account"
     end
@@ -377,7 +391,7 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
       :ok =
         :telemetry.attach(
           "test-cod-failure",
-          [:market_maker, :adapter, :cod, :failure],
+          [:deribit_ex, :adapter, :cod, :failure],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -388,14 +402,17 @@ defmodule MarketMaker.WS.DeribitAdapterCODTest do
         :telemetry.detach("test-cod-failure")
       end)
 
-      {:error, returned_error, updated_state} = DeribitAdapter.handle_get_cod_response(response, state)
+      {:error, returned_error, updated_state} =
+        DeribitAdapter.handle_get_cod_response(response, state)
 
       # Check that state remains unchanged
       assert updated_state == state
       assert returned_error == error
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :adapter, :cod, :failure], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :adapter, :cod, :failure], %{system_time: _},
+                       metadata}
+
       assert metadata.error == error
     end
   end

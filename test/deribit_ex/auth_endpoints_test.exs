@@ -1,9 +1,9 @@
-defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
+defmodule DeribitEx.DeribitAuthEndpointsTest do
   use ExUnit.Case
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitAdapter
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.DeribitClient
 
   describe "authentication data generation" do
     test "generate_auth_data/1 creates proper JSON-RPC structure" do
@@ -274,17 +274,24 @@ defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
       EnvSetup.ensure_credentials()
 
       # Get credentials from application config or env
-      config = Application.get_env(:market_maker, :websocket, [])
+      config = Application.get_env(:deribit_ex, :websocket, [])
       config_id = Keyword.get(config, :client_id)
       config_secret = Keyword.get(config, :client_secret)
 
       # Fall back to environment variables if needed
-      api_key = config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
-      secret = config_secret || System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
+      api_key =
+        config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
+
+      secret =
+        config_secret || System.get_env("DERIBIT_CLIENT_SECRET") ||
+          System.get_env("DERIBIT_API_SECRET")
 
       # Show some debug information
       IO.puts("API key from config: #{if config_id, do: "SET", else: "nil"}")
-      IO.puts("Using api_key: #{if api_key, do: String.slice(api_key, 0, 4) <> "...", else: "nil"}")
+
+      IO.puts(
+        "Using api_key: #{if api_key, do: String.slice(api_key, 0, 4) <> "...", else: "nil"}"
+      )
 
       # Fail test if credentials are missing
       if !(api_key && secret && api_key != "" && secret != "") do
@@ -335,13 +342,17 @@ defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
       EnvSetup.ensure_credentials()
 
       # Get credentials from application config or env
-      config = Application.get_env(:market_maker, :websocket, [])
+      config = Application.get_env(:deribit_ex, :websocket, [])
       config_id = Keyword.get(config, :client_id)
       config_secret = Keyword.get(config, :client_secret)
 
       # Fall back to environment variables if needed
-      api_key = config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
-      secret = config_secret || System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
+      api_key =
+        config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
+
+      secret =
+        config_secret || System.get_env("DERIBIT_CLIENT_SECRET") ||
+          System.get_env("DERIBIT_API_SECRET")
 
       # Fail test if credentials are missing
       if !(api_key && secret && api_key != "" && secret != "") do
@@ -401,7 +412,10 @@ defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
         "Refresh token type: #{(is_binary(refresh_token) && "string") || (is_map(refresh_token) && "map") || (is_list(refresh_token) && "list") || (is_number(refresh_token) && "number") || "unknown"}"
       )
 
-      IO.puts("Refresh token value: #{if refresh_token, do: String.slice(refresh_token, 0, 10), else: "nil"}...")
+      IO.puts(
+        "Refresh token value: #{if refresh_token, do: String.slice(refresh_token, 0, 10), else: "nil"}..."
+      )
+
       IO.puts("Token scope: #{auth_result["scope"]}")
 
       # Ensure we have a valid refresh token
@@ -484,7 +498,10 @@ defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
         end
       else
         IO.puts("Skipping test: Refresh token doesn't have required session scope.")
-        IO.puts("Fork token operation requires a refresh token with session scope, which we don't have.")
+
+        IO.puts(
+          "Fork token operation requires a refresh token with session scope, which we don't have."
+        )
 
         # Skip the test by just returning (not raising an error)
         assert true
@@ -501,13 +518,17 @@ defmodule MarketMaker.WS.DeribitAuthEndpointsTest do
     EnvSetup.ensure_credentials()
 
     # Get credentials from application config or env
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     config_id = Keyword.get(config, :client_id)
     config_secret = Keyword.get(config, :client_secret)
 
     # Fall back to environment variables if needed
-    api_key = config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
-    secret = config_secret || System.get_env("DERIBIT_CLIENT_SECRET") || System.get_env("DERIBIT_API_SECRET")
+    api_key =
+      config_id || System.get_env("DERIBIT_CLIENT_ID") || System.get_env("DERIBIT_API_KEY")
+
+    secret =
+      config_secret || System.get_env("DERIBIT_CLIENT_SECRET") ||
+        System.get_env("DERIBIT_API_SECRET")
 
     # Fail test if credentials are missing
     if !(api_key && secret && api_key != "" && secret != "") do

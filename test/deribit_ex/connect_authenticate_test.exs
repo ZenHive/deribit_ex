@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
+defmodule DeribitEx.DeribitConnectAuthenticateTest do
   @moduledoc """
   Tests for the authentication functionality in the Deribit WebSocket client.
 
@@ -16,14 +16,14 @@ defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
 
   use ExUnit.Case, async: false
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitClient
 
   @tag :integration
   test "connect and authenticate using credentials from connection" do
     # Skip test if no credentials available
     EnvSetup.ensure_credentials()
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -56,7 +56,7 @@ defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
   test "authenticate with explicitly provided credentials" do
     # Skip test if no credentials available
     EnvSetup.ensure_credentials()
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -85,7 +85,7 @@ defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
   test "authenticate using credentials from connection_info" do
     # Skip test if no credentials available
     EnvSetup.ensure_credentials()
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -124,7 +124,7 @@ defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
     # Clear any credentials from environment and application config for this test
     original_env_client_id = System.get_env("DERIBIT_CLIENT_ID")
     original_env_client_secret = System.get_env("DERIBIT_CLIENT_SECRET")
-    original_config = Application.get_env(:market_maker, :websocket, [])
+    original_config = Application.get_env(:deribit_ex, :websocket, [])
 
     # Temporarily modify environment to ensure no credentials are available
     # Note: This only affects the current process and won't interfere with other tests
@@ -144,7 +144,10 @@ defmodule MarketMaker.WS.DeribitConnectAuthenticateTest do
 
     # Restore the original environment and config
     if original_env_client_id, do: System.put_env("DERIBIT_CLIENT_ID", original_env_client_id)
-    if original_env_client_secret, do: System.put_env("DERIBIT_CLIENT_SECRET", original_env_client_secret)
-    Application.put_env(:market_maker, :websocket, original_config)
+
+    if original_env_client_secret,
+      do: System.put_env("DERIBIT_CLIENT_SECRET", original_env_client_secret)
+
+    Application.put_env(:deribit_ex, :websocket, original_config)
   end
 end

@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.TimeSyncService do
+defmodule DeribitEx.TimeSyncService do
   @moduledoc """
   A dedicated service for maintaining and tracking the time delta between the local system
   and the Deribit server. This service periodically synchronizes with the Deribit server time
@@ -28,7 +28,7 @@ defmodule MarketMaker.WS.TimeSyncService do
 
   use GenServer
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   # Default synchronization interval in milliseconds (5 minutes)
   @default_sync_interval 300_000
@@ -193,7 +193,7 @@ defmodule MarketMaker.WS.TimeSyncService do
     local_before = System.system_time(:millisecond)
 
     # Get the client module - either the configured one for testing or DeribitClient
-    client_module = Application.get_env(:market_maker, :deribit_client_module, DeribitClient)
+    client_module = Application.get_env(:deribit_ex, :deribit_client_module, DeribitClient)
 
     # Skip during tests or when connection isn't valid
     if is_pid(state.client_pid) and Process.alive?(state.client_pid) do
@@ -210,7 +210,7 @@ defmodule MarketMaker.WS.TimeSyncService do
 
           # Emit telemetry for successful time sync
           :telemetry.execute(
-            [:market_maker, :time_sync, :success],
+            [:deribit_ex, :time_sync, :success],
             %{
               delta: delta,
               latency: latency,
@@ -227,7 +227,7 @@ defmodule MarketMaker.WS.TimeSyncService do
         {:error, reason} ->
           # Emit telemetry for failed time sync
           :telemetry.execute(
-            [:market_maker, :time_sync, :failure],
+            [:deribit_ex, :time_sync, :failure],
             %{system_time: System.system_time(:millisecond)},
             %{
               client_pid: state.client_pid,

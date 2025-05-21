@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitAdapterTest do
+defmodule DeribitEx.DeribitAdapterTest do
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitAdapter
+  alias DeribitEx.DeribitAdapter
 
   describe "connection_info/1" do
     test "returns correct defaults for test environment" do
@@ -255,7 +255,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok =
         :telemetry.attach(
           "test-rpc-request",
-          [:market_maker, :rpc, :request],
+          [:deribit_ex, :rpc, :request],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -289,7 +289,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       assert updated_state.requests[request_id].method == method
 
       # Verify telemetry was emitted
-      assert_received {:telemetry, [:market_maker, :rpc, :request], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :rpc, :request], %{system_time: _}, metadata}
       assert metadata.method == method
       assert metadata.request_id == request_id
     end
@@ -370,7 +370,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok =
         :telemetry.attach(
           "test-connection-opened",
-          [:market_maker, :connection, :opened],
+          [:deribit_ex, :connection, :opened],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -380,7 +380,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok =
         :telemetry.attach(
           "test-reconnect-auth",
-          [:market_maker, :connection, :reconnect_with_auth],
+          [:deribit_ex, :connection, :reconnect_with_auth],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -400,7 +400,8 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       {:ok, updated_state} = DeribitAdapter.handle_connect(:http, state)
 
       # Verify telemetry event was sent
-      assert_received {:telemetry, [:market_maker, :connection, :opened], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _},
+                       metadata}
 
       assert metadata.transport == :http
       assert metadata.reconnect_attempts == 0
@@ -425,12 +426,13 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       {:authenticate, updated_state} = DeribitAdapter.handle_connect(:http, reconnection_state)
 
       # Verify telemetry events were sent
-      assert_received {:telemetry, [:market_maker, :connection, :opened], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :opened], %{system_time: _},
+                       metadata}
 
       assert metadata.reconnect_attempts == 1
 
-      assert_received {:telemetry, [:market_maker, :connection, :reconnect_with_auth], %{system_time: _},
-                       subscription_metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :reconnect_with_auth],
+                       %{system_time: _}, subscription_metadata}
 
       assert subscription_metadata.subscription_count == 1
 
@@ -457,7 +459,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok =
         :telemetry.attach(
           "test-connection-closed",
-          [:market_maker, :connection, :closed],
+          [:deribit_ex, :connection, :closed],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -467,7 +469,7 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok =
         :telemetry.attach(
           "test-auth-error-reconnect",
-          [:market_maker, :connection, :auth_error_reconnect],
+          [:deribit_ex, :connection, :auth_error_reconnect],
           fn event_name, measurements, metadata, _config ->
             send(test_pid, {:telemetry, event_name, measurements, metadata})
           end,
@@ -487,7 +489,8 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok = DeribitAdapter.terminate(:normal, state)
 
       # Verify telemetry event was sent
-      assert_received {:telemetry, [:market_maker, :connection, :closed], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
+                       metadata}
 
       # Verify metadata includes reason and duration
       assert metadata.reason == :normal
@@ -501,7 +504,8 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       {:reconnect, updated_state} = DeribitAdapter.terminate({:error, :network_error}, state)
 
       # Verify telemetry event
-      assert_received {:telemetry, [:market_maker, :connection, :closed], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
+                       metadata}
 
       assert metadata.reason == {:error, :network_error}
       assert metadata.will_reconnect == true
@@ -518,7 +522,8 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
       :ok = DeribitAdapter.terminate({:error, :network_error}, state_at_max)
 
       # Verify telemetry indicates no more reconnects
-      assert_received {:telemetry, [:market_maker, :connection, :closed], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
+                       metadata}
 
       assert metadata.reason == {:error, :network_error}
       assert metadata.will_reconnect == false
@@ -532,7 +537,8 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
         DeribitAdapter.terminate({:auth_error, "Invalid credentials"}, state)
 
       # Verify telemetry event
-      assert_received {:telemetry, [:market_maker, :connection, :closed], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
+                       metadata}
 
       assert metadata.will_reconnect == true
       assert metadata.auth_status == :unauthenticated
@@ -553,12 +559,14 @@ defmodule MarketMaker.WS.DeribitAdapterTest do
         DeribitAdapter.terminate({:auth_error, "Token expired"}, authenticated_state)
 
       # Verify telemetry events
-      assert_received {:telemetry, [:market_maker, :connection, :closed], %{system_time: _}, metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :closed], %{system_time: _},
+                       metadata}
 
       assert metadata.will_reconnect == true
       assert metadata.auth_status == :authenticated
 
-      assert_received {:telemetry, [:market_maker, :connection, :auth_error_reconnect], %{system_time: _}, error_metadata}
+      assert_received {:telemetry, [:deribit_ex, :connection, :auth_error_reconnect],
+                       %{system_time: _}, error_metadata}
 
       assert error_metadata.reason == {:auth_error, "Token expired"}
 

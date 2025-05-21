@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitClientCODTest do
+defmodule DeribitEx.DeribitClientCODTest do
   @moduledoc """
   Unit tests for the validation logic in DeribitClient without requiring
   actual connections. We will use the integration tests to test the actual
@@ -7,7 +7,7 @@ defmodule MarketMaker.WS.DeribitClientCODTest do
 
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   @moduletag :unit
   @moduletag :cod

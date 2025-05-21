@@ -15,10 +15,10 @@ find lib test -name "*.ex" -o -name "*.exs" | xargs sed -i '' -e 's/defmodule Ma
 
 # Update config references
 echo "Updating config references..."
-find lib test config -name "*.ex" -o -name "*.exs" | xargs sed -i '' -e 's/:market_maker/:deribit_ex/g'
+find lib test config -name "*.ex" -o -name "*.exs" | xargs sed -i '' -e 's/:deribit_ex/:deribit_ex/g'
 
 # Update telemetry event paths
 echo "Updating telemetry event paths..."
-find lib test -name "*.ex" -o -name "*.exs" | xargs sed -i '' -e 's/\[:market_maker,/[:deribit_ex,/g'
+find lib test -name "*.ex" -o -name "*.exs" | xargs sed -i '' -e 's/\[:deribit_ex,/[:deribit_ex,/g'
 
 echo "Module renaming complete."

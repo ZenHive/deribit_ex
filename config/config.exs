@@ -7,9 +7,11 @@ config :deribit_ex,
     time_sync: [
       enabled: true,
       auto_sync_on_connect: true,
-      sync_interval: 3600_000  # 1 hour
+      # 1 hour
+      sync_interval: 3600_000
     ],
-    rate_limit_mode: :normal  # :cautious, :normal, or :aggressive
+    # :cautious, :normal, or :aggressive
+    rate_limit_mode: :normal
   ]
 
 # Optional dev configuration

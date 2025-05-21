@@ -7,7 +7,7 @@ defmodule DeribitEx.Application do
     children = [
       # Registry for tracking connections and processes
       {Registry, keys: :unique, name: DeribitEx.Registry},
-      
+
       # Time sync supervisor for managing time synchronization with Deribit
       {DeribitEx.TimeSyncSupervisor, []}
     ]

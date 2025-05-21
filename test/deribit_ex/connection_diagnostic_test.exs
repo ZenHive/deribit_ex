@@ -1,8 +1,8 @@
-# defmodule MarketMaker.WS.ConnectionDiagnosticTest do
+# defmodule DeribitEx.ConnectionDiagnosticTest do
 #   use ExUnit.Case, async: false
 
-#   alias MarketMaker.WS.DeribitAdapter
-#   alias MarketMaker.WS.DeribitClient
+#   alias DeribitEx.DeribitAdapter
+#   alias DeribitEx.DeribitClient
 #   alias WebsockexNova.Client
 
 #   @moduletag :debug
@@ -12,10 +12,10 @@
 #     :telemetry.attach_many(
 #       "connection-test-handler",
 #       [
-#         [:market_maker, :client, :connect, :failure],
-#         [:market_maker, :adapter, :auth_refresh_config],
-#         [:market_maker, :connection, :opened],
-#         [:market_maker, :connection, :closed]
+#         [:deribit_ex, :client, :connect, :failure],
+#         [:deribit_ex, :adapter, :auth_refresh_config],
+#         [:deribit_ex, :connection, :opened],
+#         [:deribit_ex, :connection, :closed]
 #       ],
 #       &handle_event/4,
 #       nil

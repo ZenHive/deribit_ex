@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.OrderContext do
+defmodule DeribitEx.OrderContext do
   @moduledoc """
   Manages order state preservation during token operations.
 
@@ -12,7 +12,7 @@ defmodule MarketMaker.WS.OrderContext do
   authentication changes and token operations.
   """
 
-  alias MarketMaker.WS.SessionContext
+  alias DeribitEx.SessionContext
 
   require Logger
 
@@ -101,7 +101,9 @@ defmodule MarketMaker.WS.OrderContext do
     # Update orders_by_session map
     current_session_orders = Map.get(context.orders_by_session, session_id, [])
     updated_session_orders = [order_id | current_session_orders]
-    updated_orders_by_session = Map.put(context.orders_by_session, session_id, updated_session_orders)
+
+    updated_orders_by_session =
+      Map.put(context.orders_by_session, session_id, updated_session_orders)
 
     # Create updated context
     updated_context = %{
@@ -113,7 +115,7 @@ defmodule MarketMaker.WS.OrderContext do
 
     # Emit telemetry
     :telemetry.execute(
-      [:market_maker, :order_context, :order_registered],
+      [:deribit_ex, :order_context, :order_registered],
       %{timestamp: now},
       %{
         order_id: order_id,
@@ -160,7 +162,7 @@ defmodule MarketMaker.WS.OrderContext do
 
         # Emit telemetry
         :telemetry.execute(
-          [:market_maker, :order_context, :order_updated],
+          [:deribit_ex, :order_context, :order_updated],
           %{timestamp: now},
           %{
             order_id: order_id,
@@ -199,7 +201,7 @@ defmodule MarketMaker.WS.OrderContext do
 
     # Emit telemetry for the transition
     :telemetry.execute(
-      [:market_maker, :order_context, :session_transition],
+      [:deribit_ex, :order_context, :session_transition],
       %{timestamp: now},
       %{
         previous_session_id: prev_session.id,

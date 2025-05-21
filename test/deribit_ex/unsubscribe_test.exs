@@ -1,8 +1,8 @@
-defmodule MarketMaker.WS.DeribitUnsubscribeTest do
+defmodule DeribitEx.DeribitUnsubscribeTest do
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitAdapter
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.DeribitClient
 
   describe "DeribitAdapter.generate_unsubscribe_data/2" do
     setup do

@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitRateLimitHandler do
+defmodule DeribitEx.DeribitRateLimitHandler do
   @moduledoc """
   Adaptive rate limit handler for Deribit WebSocket API.
 
@@ -112,7 +112,7 @@ defmodule MarketMaker.WS.DeribitRateLimitHandler do
       original_refill_rate: refill_rate,
 
       # Get telemetry settings
-      telemetry_prefix: Map.get(adaptive_opts, :telemetry_prefix, [:market_maker, :rate_limit])
+      telemetry_prefix: Map.get(adaptive_opts, :telemetry_prefix, [:deribit_ex, :rate_limit])
     }
 
     # Store configuration for reference

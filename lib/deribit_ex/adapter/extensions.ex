@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitAdapterExtensions do
+defmodule DeribitEx.DeribitAdapterExtensions do
   @moduledoc """
   Extensions to the DeribitAdapter for integration with token management.
 
@@ -10,7 +10,7 @@ defmodule MarketMaker.WS.DeribitAdapterExtensions do
   directly into the DeribitAdapter module.
   """
 
-  alias MarketMaker.WS.TokenManager
+  alias DeribitEx.TokenManager
 
   require Logger
 
@@ -42,7 +42,9 @@ defmodule MarketMaker.WS.DeribitAdapterExtensions do
 
       # Initialize token manager from auth response
       # Note: This function only returns {:ok, updated_token_manager}
-      {:ok, updated_token_manager} = TokenManager.init_from_auth(state.token_manager, result, opts)
+      {:ok, updated_token_manager} =
+        TokenManager.init_from_auth(state.token_manager, result, opts)
+
       # Update state with new token manager
       Map.put(state, :token_manager, updated_token_manager)
     else
@@ -64,7 +66,11 @@ defmodule MarketMaker.WS.DeribitAdapterExtensions do
 
       if subject_id do
         # Update token manager from exchange token response
-        case TokenManager.handle_exchange_token(state.token_manager, response["result"], subject_id) do
+        case TokenManager.handle_exchange_token(
+               state.token_manager,
+               response["result"],
+               subject_id
+             ) do
           {:ok, updated_token_manager} ->
             # Update state with new token manager
             Map.put(state, :token_manager, updated_token_manager)
@@ -173,7 +179,9 @@ defmodule MarketMaker.WS.DeribitAdapterExtensions do
     if Map.has_key?(state, :token_manager) do
       # Unregister subscription from token manager
       # Note: This function only returns {:ok, updated_token_manager}
-      {:ok, updated_token_manager} = TokenManager.unregister_subscription(state.token_manager, channel)
+      {:ok, updated_token_manager} =
+        TokenManager.unregister_subscription(state.token_manager, channel)
+
       # Update state with new token manager
       Map.put(state, :token_manager, updated_token_manager)
     else
@@ -198,7 +206,9 @@ defmodule MarketMaker.WS.DeribitAdapterExtensions do
       case TokenManager.perform_resubscription(state.token_manager, client_conn) do
         {:ok, updated_token_manager, results} ->
           # Log successful resubscription
-          Logger.info("Successfully resubscribed to #{map_size(results)} channels after reconnect")
+          Logger.info(
+            "Successfully resubscribed to #{map_size(results)} channels after reconnect"
+          )
 
           # Update state and clear need_resubscribe flag
           state =

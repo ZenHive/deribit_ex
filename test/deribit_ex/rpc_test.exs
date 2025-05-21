@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitRPCTest do
+defmodule DeribitEx.DeribitRPCTest do
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitRPC
+  alias DeribitEx.DeribitRPC
 
   describe "generate_request/3" do
     test "generates proper JSON-RPC request structure" do
@@ -59,20 +59,20 @@ defmodule MarketMaker.WS.DeribitRPCTest do
       params = %{}
 
       # Setup telemetry handler
-      events = [[:market_maker, :rpc, :request_generated]]
-      ref = MarketMaker.TelemetryTestHelpers.attach_event_handlers(self(), events)
+      events = [[:deribit_ex, :rpc, :request_generated]]
+      ref = DeribitEx.TelemetryTestHelpers.attach_event_handlers(self(), events)
 
       {:ok, _payload, id} = DeribitRPC.generate_request(method, params)
 
       # Assert telemetry event was emitted
-      assert_receive {[:market_maker, :rpc, :request_generated], ^ref, measurements, metadata}
+      assert_receive {[:deribit_ex, :rpc, :request_generated], ^ref, measurements, metadata}
       assert is_map(measurements)
       assert is_integer(measurements.system_time)
       assert metadata.method == method
       assert metadata.request_id == id
 
       # Clean up telemetry handler
-      MarketMaker.TelemetryTestHelpers.detach_event_handlers(ref, events)
+      DeribitEx.TelemetryTestHelpers.detach_event_handlers(ref, events)
     end
 
     test "raises FunctionClauseError when params is not a map" do
@@ -126,13 +126,13 @@ defmodule MarketMaker.WS.DeribitRPCTest do
       }
 
       # Setup telemetry handler
-      events = [[:market_maker, :rpc, :error_response]]
-      ref = MarketMaker.TelemetryTestHelpers.attach_event_handlers(self(), events)
+      events = [[:deribit_ex, :rpc, :error_response]]
+      ref = DeribitEx.TelemetryTestHelpers.attach_event_handlers(self(), events)
 
       DeribitRPC.parse_response(response)
 
       # Assert telemetry event was emitted
-      assert_receive {[:market_maker, :rpc, :error_response], ^ref, measurements, metadata}
+      assert_receive {[:deribit_ex, :rpc, :error_response], ^ref, measurements, metadata}
       assert is_map(measurements)
       assert is_integer(measurements.system_time)
       assert metadata.error == error
@@ -140,27 +140,27 @@ defmodule MarketMaker.WS.DeribitRPCTest do
       assert metadata.usermsg == "Error message"
 
       # Clean up telemetry handler
-      MarketMaker.TelemetryTestHelpers.detach_event_handlers(ref, events)
+      DeribitEx.TelemetryTestHelpers.detach_event_handlers(ref, events)
     end
 
     test "handles invalid response structure and emits telemetry" do
       invalid_response = %{"foo" => "bar"}
 
       # Setup telemetry handler to capture the event
-      events = [[:market_maker, :rpc, :invalid_response]]
-      ref = MarketMaker.TelemetryTestHelpers.attach_event_handlers(self(), events)
+      events = [[:deribit_ex, :rpc, :invalid_response]]
+      ref = DeribitEx.TelemetryTestHelpers.attach_event_handlers(self(), events)
 
       assert DeribitRPC.parse_response(invalid_response) ==
                {:error, {:invalid_response, invalid_response}}
 
       # Assert telemetry event was emitted with expected data
-      assert_receive {[:market_maker, :rpc, :invalid_response], _ref, measurements, metadata}
+      assert_receive {[:deribit_ex, :rpc, :invalid_response], _ref, measurements, metadata}
       assert is_map(measurements)
       assert is_integer(measurements.system_time)
       assert metadata.response == invalid_response
 
       # Clean up telemetry handler
-      MarketMaker.TelemetryTestHelpers.detach_event_handlers(ref, events)
+      DeribitEx.TelemetryTestHelpers.detach_event_handlers(ref, events)
     end
   end
 

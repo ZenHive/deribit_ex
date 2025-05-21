@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.SubscriptionDebugTest do
+defmodule DeribitEx.SubscriptionDebugTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   require Logger
 

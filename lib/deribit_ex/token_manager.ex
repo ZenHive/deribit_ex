@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.TokenManager do
+defmodule DeribitEx.TokenManager do
   @moduledoc """
   Integrates token management with order management.
 
@@ -14,9 +14,9 @@ defmodule MarketMaker.WS.TokenManager do
   preserving application state.
   """
 
-  alias MarketMaker.WS.OrderContext
-  alias MarketMaker.WS.ResubscriptionHandler
-  alias MarketMaker.WS.SessionContext
+  alias DeribitEx.OrderContext
+  alias DeribitEx.ResubscriptionHandler
+  alias DeribitEx.SessionContext
 
   require Logger
 
@@ -75,7 +75,7 @@ defmodule MarketMaker.WS.TokenManager do
 
     # Emit telemetry for token manager initialization
     :telemetry.execute(
-      [:market_maker, :token_manager, :initialized],
+      [:deribit_ex, :token_manager, :initialized],
       %{timestamp: System.system_time(:millisecond)},
       %{
         session_id: session.id
@@ -125,11 +125,16 @@ defmodule MarketMaker.WS.TokenManager do
         )
 
       # Create updated manager
-      updated_manager = %{manager | session: new_session, orders: updated_orders, resubscription: updated_resubscription}
+      updated_manager = %{
+        manager
+        | session: new_session,
+          orders: updated_orders,
+          resubscription: updated_resubscription
+      }
 
       # Emit telemetry for token exchange
       :telemetry.execute(
-        [:market_maker, :token_manager, :exchange_token],
+        [:deribit_ex, :token_manager, :exchange_token],
         %{timestamp: System.system_time(:millisecond)},
         %{
           previous_session_id: manager.session.id,
@@ -184,11 +189,16 @@ defmodule MarketMaker.WS.TokenManager do
         )
 
       # Create updated manager
-      updated_manager = %{manager | session: new_session, orders: updated_orders, resubscription: updated_resubscription}
+      updated_manager = %{
+        manager
+        | session: new_session,
+          orders: updated_orders,
+          resubscription: updated_resubscription
+      }
 
       # Emit telemetry for token fork
       :telemetry.execute(
-        [:market_maker, :token_manager, :fork_token],
+        [:deribit_ex, :token_manager, :fork_token],
         %{timestamp: System.system_time(:millisecond)},
         %{
           previous_session_id: manager.session.id,
@@ -229,7 +239,7 @@ defmodule MarketMaker.WS.TokenManager do
 
       # Emit telemetry for token refresh
       :telemetry.execute(
-        [:market_maker, :token_manager, :token_refresh],
+        [:deribit_ex, :token_manager, :token_refresh],
         %{timestamp: System.system_time(:millisecond)},
         %{
           session_id: updated_session.id
@@ -262,7 +272,7 @@ defmodule MarketMaker.WS.TokenManager do
 
       # Emit telemetry for logout
       :telemetry.execute(
-        [:market_maker, :token_manager, :logout],
+        [:deribit_ex, :token_manager, :logout],
         %{timestamp: System.system_time(:millisecond)},
         %{
           session_id: invalidated_session.id
@@ -448,7 +458,8 @@ defmodule MarketMaker.WS.TokenManager do
   - `{:ok, orders}`: List of active orders
   - `{:error, :no_active_session}`: If no active session exists
   """
-  @spec get_active_orders(t()) :: {:ok, list(OrderContext.order_entry())} | {:error, :no_active_session}
+  @spec get_active_orders(t()) ::
+          {:ok, list(OrderContext.order_entry())} | {:error, :no_active_session}
   def get_active_orders(manager) do
     case get_session_id(manager) do
       {:ok, session_id} ->

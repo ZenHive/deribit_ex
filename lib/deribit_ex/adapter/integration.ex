@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitAdapterIntegration do
+defmodule DeribitEx.DeribitAdapterIntegration do
   @moduledoc """
   Integration file to add token management to DeribitAdapter.
 
@@ -11,7 +11,7 @@ defmodule MarketMaker.WS.DeribitAdapterIntegration do
   Add the following line to the application.ex start function to apply patches:
 
   ```elixir
-  MarketMaker.WS.DeribitAdapterIntegration.apply_patches()
+  DeribitEx.DeribitAdapterIntegration.apply_patches()
   ```
   """
 

@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitClientParseResponseTest do
+defmodule DeribitEx.DeribitClientParseResponseTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitClient
 
   describe "parse_response/1" do
     test "delegates to DeribitRPC.parse_response/1 for successful responses" do

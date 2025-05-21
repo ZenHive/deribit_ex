@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitRPCBatchTest do
+defmodule DeribitEx.DeribitRPCBatchTest do
   @moduledoc """
   Note: These tests are skipped because batch request functionality 
   has been removed from the codebase as Deribit API does not support 
@@ -7,7 +7,7 @@ defmodule MarketMaker.WS.DeribitRPCBatchTest do
 
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitRPC
+  alias DeribitEx.DeribitRPC
 
   @moduletag :skip
 

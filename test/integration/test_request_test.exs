@@ -8,9 +8,9 @@ defmodule MarketMaker.Integration.DeribitTestRequestTest do
 
   use ExUnit.Case
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitAdapter
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.DeribitClient
 
   @moduletag :integration
   @moduletag :external

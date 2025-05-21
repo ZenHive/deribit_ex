@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.EnvCheckTest do
+defmodule DeribitEx.EnvCheckTest do
   use ExUnit.Case
 
   test "check environment variables directly" do
@@ -15,12 +15,15 @@ defmodule MarketMaker.WS.EnvCheckTest do
       "DERIBIT_CLIENT_ID type: #{inspect((client_id && ((is_binary(client_id) && "string") || typeof(client_id))) || "nil")}"
     )
 
-    IO.puts("DERIBIT_CLIENT_SECRET length: #{inspect((client_secret && String.length(client_secret)) || 0)}")
+    IO.puts(
+      "DERIBIT_CLIENT_SECRET length: #{inspect((client_secret && String.length(client_secret)) || 0)}"
+    )
+
     IO.puts("DERIBIT_HOST: #{inspect(host)}")
 
     # Try getting from Application env
-    config_entry = Application.get_env(:market_maker, :websocket, [])
-    IO.puts("Application.get_env(:market_maker, :websocket): #{inspect(config_entry)}")
+    config_entry = Application.get_env(:deribit_ex, :websocket, [])
+    IO.puts("Application.get_env(:deribit_ex, :websocket): #{inspect(config_entry)}")
 
     # This assertion just prevents the test from failing
     assert true

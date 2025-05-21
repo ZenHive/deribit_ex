@@ -1,8 +1,8 @@
-defmodule MarketMaker.WS.DeribitHeartbeatTest do
+defmodule DeribitEx.DeribitHeartbeatTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitAdapter
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.DeribitAdapter
+  alias DeribitEx.DeribitClient
 
   # Setup for integration tests
   setup do
@@ -101,7 +101,8 @@ defmodule MarketMaker.WS.DeribitHeartbeatTest do
       response = %{"error" => error}
 
       # Process the response
-      {:error, returned_error, updated_state} = DeribitAdapter.handle_set_heartbeat_response(response, state)
+      {:error, returned_error, updated_state} =
+        DeribitAdapter.handle_set_heartbeat_response(response, state)
 
       # Error should be returned
       assert returned_error == error
@@ -134,7 +135,8 @@ defmodule MarketMaker.WS.DeribitHeartbeatTest do
       response = %{"error" => error}
 
       # Process the response
-      {:error, returned_error, updated_state} = DeribitAdapter.handle_disable_heartbeat_response(response, state)
+      {:error, returned_error, updated_state} =
+        DeribitAdapter.handle_disable_heartbeat_response(response, state)
 
       # Error should be returned
       assert returned_error == error

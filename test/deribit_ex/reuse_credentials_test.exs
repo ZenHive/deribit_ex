@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
+defmodule DeribitEx.DeribitReuseCredentialsTest do
   use ExUnit.Case
 
   describe "credential handling in DeribitClient" do
@@ -50,7 +50,8 @@ defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
       end
 
       # Call the function with specific credentials
-      result = TestDeribitClient2.authenticate("fake_conn", %{api_key: "test_key", secret: "test_secret"})
+      result =
+        TestDeribitClient2.authenticate("fake_conn", %{api_key: "test_key", secret: "test_secret"})
 
       # The function should have passed the specific credentials through
       assert {:ok, _, %{api_key: "test_key", secret: "test_secret"}} = result
@@ -77,10 +78,12 @@ defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
           actual_credentials =
             if credentials == %{} do
               case conn do
-                %{adapter_state: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{adapter_state: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
-                %{connection_info: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{connection_info: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
                 _ ->
@@ -129,10 +132,12 @@ defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
           actual_credentials =
             if credentials == %{} do
               case conn do
-                %{adapter_state: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{adapter_state: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
-                %{connection_info: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{connection_info: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
                 _ ->
@@ -181,10 +186,12 @@ defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
           actual_credentials =
             if credentials == %{} do
               case conn do
-                %{adapter_state: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{adapter_state: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
-                %{connection_info: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{connection_info: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
                 _ ->
@@ -237,10 +244,12 @@ defmodule MarketMaker.WS.DeribitReuseCredentialsTest do
           actual_credentials =
             if credentials == %{} do
               case conn do
-                %{adapter_state: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{adapter_state: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
-                %{connection_info: %{credentials: creds}} when is_map(creds) and map_size(creds) > 0 ->
+                %{connection_info: %{credentials: creds}}
+                when is_map(creds) and map_size(creds) > 0 ->
                   creds
 
                 _ ->

@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitRPC do
+defmodule DeribitEx.DeribitRPC do
   @moduledoc """
   Core JSON-RPC handling for Deribit WebSocket API.
 
@@ -89,7 +89,7 @@ defmodule MarketMaker.WS.DeribitRPC do
 
     # Emit telemetry for request generation
     :telemetry.execute(
-      [:market_maker, :rpc, :request_generated],
+      [:deribit_ex, :rpc, :request_generated],
       %{system_time: System.system_time()},
       %{method: method, request_id: request_id}
     )
@@ -122,7 +122,7 @@ defmodule MarketMaker.WS.DeribitRPC do
   def parse_response(%{"error" => error} = response) do
     # Emit telemetry for error responses
     :telemetry.execute(
-      [:market_maker, :rpc, :error_response],
+      [:deribit_ex, :rpc, :error_response],
       %{system_time: System.system_time()},
       %{
         error: error,
@@ -137,7 +137,7 @@ defmodule MarketMaker.WS.DeribitRPC do
   def parse_response(other) do
     # Emit telemetry for invalid response structures to aid debugging
     :telemetry.execute(
-      [:market_maker, :rpc, :invalid_response],
+      [:deribit_ex, :rpc, :invalid_response],
       %{system_time: System.system_time()},
       %{response: other}
     )
@@ -380,7 +380,9 @@ defmodule MarketMaker.WS.DeribitRPC do
       %{channel: "trades.BTC-PERPETUAL.raw", type: :subscription}
   """
   @spec extract_metadata(map()) :: map()
-  def extract_metadata(%{"method" => "subscription", "params" => %{"channel" => channel}} = _response) do
+  def extract_metadata(
+        %{"method" => "subscription", "params" => %{"channel" => channel}} = _response
+      ) do
     # Process subscription notifications
     %{
       channel: channel,
@@ -388,7 +390,8 @@ defmodule MarketMaker.WS.DeribitRPC do
     }
   end
 
-  def extract_metadata(%{"usIn" => user_in, "usOut" => user_out}) when is_integer(user_in) and is_integer(user_out) do
+  def extract_metadata(%{"usIn" => user_in, "usOut" => user_out})
+      when is_integer(user_in) and is_integer(user_out) do
     # Extract timing information when available
     processing_time = user_out - user_in
 

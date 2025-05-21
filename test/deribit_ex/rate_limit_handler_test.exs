@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitRateLimitHandlerTest do
+defmodule DeribitEx.DeribitRateLimitHandlerTest do
   use ExUnit.Case, async: true
 
-  alias MarketMaker.WS.DeribitRateLimitHandler
+  alias DeribitEx.DeribitRateLimitHandler
 
   describe "rate_limit_init/1" do
     test "initializes with default settings" do

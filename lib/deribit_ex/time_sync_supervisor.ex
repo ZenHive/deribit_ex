@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.TimeSyncSupervisor do
+defmodule DeribitEx.TimeSyncSupervisor do
   @moduledoc """
   Supervisor for the TimeSyncService.
 
@@ -8,7 +8,7 @@ defmodule MarketMaker.WS.TimeSyncSupervisor do
 
   use DynamicSupervisor
 
-  alias MarketMaker.WS.TimeSyncService
+  alias DeribitEx.TimeSyncService
 
   @doc """
   Starts the TimeSyncSupervisor.

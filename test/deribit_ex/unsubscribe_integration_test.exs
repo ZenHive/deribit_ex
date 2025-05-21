@@ -1,4 +1,4 @@
-defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
+defmodule DeribitEx.DeribitUnsubscribeIntegrationTest do
   @moduledoc """
   Integration tests for unsubscribe endpoints against the Deribit test API.
 
@@ -12,8 +12,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
 
   use ExUnit.Case, async: false
 
-  alias MarketMaker.Test.EnvSetup
-  alias MarketMaker.WS.DeribitClient
+  alias DeribitEx.Test.EnvSetup
+  alias DeribitEx.DeribitClient
 
   require Logger
 
@@ -27,7 +27,7 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
     has_credentials = EnvSetup.ensure_credentials()
 
     # Get credentials from application config
-    config = Application.get_env(:market_maker, :websocket, [])
+    config = Application.get_env(:deribit_ex, :websocket, [])
     client_id = Keyword.get(config, :client_id)
     client_secret = Keyword.get(config, :client_secret)
 
@@ -82,7 +82,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
           end
         else
           # Handle subscription method response messages
-          if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+          if is_map(decoded) && Map.has_key?(decoded, "method") &&
+               decoded["method"] == "subscription" do
             if is_map(decoded["params"]) && Map.has_key?(decoded["params"], "channel") do
               # Extract the channel information
               {:ok, [decoded["params"]["channel"]]}
@@ -133,6 +134,7 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
           {:ok, decoded} ->
             if is_map(decoded) && Map.has_key?(decoded, "result") do
               result = decoded["result"]
+
               # Some APIs directly return array of unsubscribed channels, others return object with unsubscribed key
               cond do
                 is_map(result) && Map.has_key?(result, "unsubscribed") ->
@@ -147,7 +149,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true
@@ -223,7 +226,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true
@@ -297,7 +301,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true
@@ -375,7 +380,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true
@@ -394,7 +400,9 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
       end
     end
 
-    test "can unsubscribe from mixed public and private channels using private endpoint", %{conn: conn} do
+    test "can unsubscribe from mixed public and private channels using private endpoint", %{
+      conn: conn
+    } do
       if is_nil(conn) do
         Logger.warning("Skipping test due to missing credentials")
         :ok
@@ -466,7 +474,8 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true
@@ -576,7 +585,10 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                         assert true
 
                       true ->
-                        Logger.warning("Unexpected unsubscribe verify response format: #{inspect(verify_result)}")
+                        Logger.warning(
+                          "Unexpected unsubscribe verify response format: #{inspect(verify_result)}"
+                        )
+
                         # Don't fail the test if we get an unexpected format
                         assert true
                     end
@@ -587,19 +599,26 @@ defmodule MarketMaker.WS.DeribitUnsubscribeIntegrationTest do
                       # Skip this and don't fail the test
                       assert true
                     else
-                      Logger.warning("Invalid unsubscribe verify response: #{inspect(verify_decoded)}")
+                      Logger.warning(
+                        "Invalid unsubscribe verify response: #{inspect(verify_decoded)}"
+                      )
+
                       # Don't fail the test if we get an unexpected format
                       assert true
                     end
                   end
 
                 {:error, reason} ->
-                  Logger.warning("Failed to parse unsubscribe verify response: #{inspect(reason)}")
+                  Logger.warning(
+                    "Failed to parse unsubscribe verify response: #{inspect(reason)}"
+                  )
+
                   # Don't fail the test if we can't parse the response
                   assert true
               end
             else
-              if is_map(decoded) && Map.has_key?(decoded, "method") && decoded["method"] == "subscription" do
+              if is_map(decoded) && Map.has_key?(decoded, "method") &&
+                   decoded["method"] == "subscription" do
                 # This is a subscription notification, not the unsubscribe response
                 # Skip this and don't fail the test
                 assert true

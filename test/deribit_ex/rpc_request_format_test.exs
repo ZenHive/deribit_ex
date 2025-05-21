@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitRPCRequestFormatTest do
+defmodule DeribitEx.DeribitRPCRequestFormatTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitRPC
+  alias DeribitEx.DeribitRPC
 
   describe "generate_request/2" do
     test "builds a JSON-RPC request for public/get_time" do

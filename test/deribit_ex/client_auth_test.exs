@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitClientAuthTest do
+defmodule DeribitEx.DeribitClientAuthTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitAdapter
+  alias DeribitEx.DeribitAdapter
 
   # This test module only tests the credential extraction logic
   # without trying to call the actual WebsockexNova.Client.authenticate function

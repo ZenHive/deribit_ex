@@ -1,7 +1,7 @@
-defmodule MarketMaker.WS.DeribitAdapterAutoResponseTest do
+defmodule DeribitEx.DeribitAdapterAutoResponseTest do
   use ExUnit.Case
 
-  alias MarketMaker.WS.DeribitAdapter
+  alias DeribitEx.DeribitAdapter
 
   describe "handle_message/2 for test_request" do
     setup do
