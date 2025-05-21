@@ -5,57 +5,53 @@
 ### ✅ Recently Completed
 - Migration to standalone library is complete
 - All tests are passing successfully
+- Hex.pm publication preparation complete
 - Other tasks have been moved to docs/archive/completed_deribit_task.md
 
 ### 🚀 Next Up
-- Prepare for publication on Hex.pm
+- Tag and release v0.1.0 
+- Push to GitHub and publish on Hex.pm
+- Monitor CI/CD pipeline and verify proper publication
 
-### 📊 Progress: 0/0 tasks completed (100%)
+### 📊 Progress: 6/6 tasks completed (100%)
 
-## Current Tasks
+## Completed Hex.pm Publication Tasks
 
-| ID        | Description                                                                                                                      | Status  | Priority | Assignee | Review Rating |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- | -------- | ------------- |
-| HEX-01    | Improve documentation for Hex.pm publication                                                                                     | Todo    | High     |          |               |
-| HEX-02    | Add proper typespecs to all public functions                                                                                     | Todo    | High     |          |               |
-| HEX-03    | Create comprehensive README with usage examples                                                                                  | Todo    | High     |          |               |
-| HEX-04    | Add license and contribution guidelines                                                                                          | Todo    | Medium   |          |               |
-| HEX-05    | Set up CI/CD pipeline                                                                                                            | Todo    | Medium   |          |               |
-| HEX-06    | Prepare Hex.pm package configuration                                                                                             | Todo    | High     |          |               |
+| ID        | Description                                                                                                                      | Status   | Priority | Assignee | Review Rating |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- | -------- | ------------- |
+| HEX-01    | Improve documentation for Hex.pm publication                                                                                     | Complete | High     |          | ⭐⭐⭐⭐⭐    |
+| HEX-02    | Add proper typespecs to all public functions                                                                                     | Complete | High     |          | ⭐⭐⭐⭐⭐    |
+| HEX-03    | Create comprehensive README with usage examples                                                                                  | Complete | High     |          | ⭐⭐⭐⭐⭐    |
+| HEX-04    | Add license and contribution guidelines                                                                                          | Complete | Medium   |          | ⭐⭐⭐⭐      |
+| HEX-05    | Set up CI/CD pipeline                                                                                                            | Complete | Medium   |          | ⭐⭐⭐⭐      |
+| HEX-06    | Prepare Hex.pm package configuration                                                                                             | Complete | High     |          | ⭐⭐⭐⭐⭐    |
 
-## Task Details
+## Release Checklist
 
-### HEX-01: Improve documentation for Hex.pm publication
-- Add @moduledoc and @doc attributes to all modules and public functions
-- Use ExDoc to generate HTML documentation
-- Ensure documentation follows Elixir standards and conventions
-- Include code examples for common operations
+Before publishing the package on Hex.pm, ensure the following steps are completed:
 
-### HEX-02: Add proper typespecs to all public functions
-- Review all public functions and add appropriate @spec attributes
-- Use proper type definitions for request and response parameters
-- Add type definitions for common data structures
-- Ensure Dialyzer passes without warnings
+1. Verify that all tests pass: `mix test`
+2. Verify that all typespecs are valid: `mix dialyzer`
+3. Verify that documentation is complete: `mix doctor`
+4. Verify that code follows standards: `mix credo --strict`
+5. Tag a release: `git tag v0.1.0`
+6. Push tags to GitHub: `git push origin v0.1.0`
+7. Ensure CI/CD pipeline is properly configured with HEX_API_KEY
+8. Monitor GitHub Actions workflow to confirm successful publication
 
-### HEX-03: Create comprehensive README with usage examples
-- Write clear installation instructions
-- Document configuration options
-- Create examples for common tasks (authentication, requests, subscriptions)
-- Add troubleshooting section
+## Future Tasks
 
-### HEX-04: Add license and contribution guidelines
-- Select and add appropriate license file
-- Create CONTRIBUTING.md with guidelines for contributors
-- Add code of conduct
+### Maintenance
+- Monitor Deribit API changes and update library accordingly
+- Add more comprehensive tests for edge cases
+- Improve error handling and recovery mechanisms
 
-### HEX-05: Set up CI/CD pipeline
-- Configure GitHub Actions for CI/CD
-- Set up automated testing on push
-- Configure Dialyzer and Credo checks
-- Add test coverage reporting
+### Documentation
+- Create additional example projects and guides
+- Document advanced usage scenarios
+- Create API reference guide for all endpoints
 
-### HEX-06: Prepare Hex.pm package configuration
-- Update mix.exs with package metadata
-- Create package description
-- Add links to GitHub repository and documentation
-- Configure version number for initial release
+### Features
+- Add telemetry reporting dashboards
+- Implement WebSocket connection pools
+- Add support for additional Deribit endpoints as they're released
