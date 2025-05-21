@@ -3,7 +3,4 @@ defmodule DeribitExTest do
 
   doctest DeribitEx
 
-  test "greets the world" do
-    assert DeribitEx.hello() == :world
-  end
 end
