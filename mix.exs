@@ -33,7 +33,11 @@ defmodule DeribitEx.MixProject do
       # Dev and test dependencies
       {:ex_doc, "~> 0.29", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.3", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.3", only: [:dev, :test], runtime: false},
+      {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:doctor, "~> 0.22.0", only: :dev},
+      # Tasks
+      {:task_validator, "~> 0.5.0", only: :dev},
     ]
   end
 end
