@@ -29,7 +29,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       # Verify essential RPC elements
       assert decoded["jsonrpc"] == "2.0"
       assert decoded["method"] == "public/set_heartbeat"
-      assert is_binary(decoded["id"])
+      assert decoded["id"] != nil  # ID can be a number or string
       assert decoded["params"]["interval"] == 30
 
       # Verify state updates
@@ -72,7 +72,7 @@ defmodule DeribitEx.DeribitHeartbeatTest do
       # Verify essential RPC elements
       assert decoded["jsonrpc"] == "2.0"
       assert decoded["method"] == "public/disable_heartbeat"
-      assert is_binary(decoded["id"])
+      assert decoded["id"] != nil  # ID can be a number or string
 
       # Verify state updates
       assert Map.has_key?(updated_state.requests, decoded["id"])

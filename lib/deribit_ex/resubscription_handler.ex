@@ -280,7 +280,7 @@ defmodule DeribitEx.ResubscriptionHandler do
   - `{:ok, subscription}`: Successful subscription
   - `{:error, reason}`: If subscription fails
   """
-  @spec subscribe_to_channel(pid(), String.t(), map()) :: {:ok, any()} | {:error, any()}
+  @spec subscribe_to_channel(pid(), String.t(), map()) :: {:ok, map() | String.t()} | {:error, any()}
   def subscribe_to_channel(conn, channel, params) do
     # We need to determine if this is a private channel requiring authentication
     is_private = is_private_channel?(channel)

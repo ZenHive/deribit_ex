@@ -257,7 +257,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
     * `{:backoff, delay_ms, state}` - Request should be delayed by specified ms
   """
   @spec check_rate_limit(map() | String.t(), state()) :: 
-          {:ok, state()} | {:backoff, non_neg_integer(), state()}
+          {:allow, state()} | {:queue, state()} | {:reject, any(), state()}
   def check_rate_limit(request, state) do
     # Extract request payload and ID
     {request_payload, request_id} = extract_request_info(request)
@@ -266,7 +266,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
     # High priority operations bypass rate limiting
     if cost == 0 do
-      {:ok, state}
+      {:allow, state}
     else
       handle_rate_limited_request(request_id, op_type, cost, state)
     end
@@ -274,7 +274,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
   # Handle a request that is subject to rate limiting
   @spec handle_rate_limited_request(String.t() | nil, operation_type(), non_neg_integer(), state()) ::
-          {:ok, state()} | {:backoff, non_neg_integer(), state()}
+          {:allow, state()} | {:queue, state()} | {:reject, non_neg_integer(), state()}
   defp handle_rate_limited_request(request_id, op_type, cost, state) do
     # Update token bucket and apply recovery if needed
     bucket = refill_tokens(state.bucket)
@@ -297,7 +297,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
           bucket_state(),
           adaptive_state(),
           state()
-        ) :: {:ok, state()}
+        ) :: {:allow, state()}
   defp process_allowed_request(request_id, op_type, cost, bucket, adaptive, state) do
     # Consume tokens for this request
     bucket = %{bucket | tokens: bucket.tokens - cost}
@@ -317,7 +317,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
     emit_request_allowed_telemetry(op_type, cost, bucket, adaptive)
 
     # All requests use the same response regardless of request_id
-    {:ok, new_state}
+    {:allow, new_state}
   end
 
   # Process a request that's being limited (not enough tokens)
@@ -327,7 +327,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
           bucket_state(),
           adaptive_state(),
           state()
-        ) :: {:backoff, non_neg_integer(), state()}
+        ) :: {:queue, state()} | {:reject, non_neg_integer(), state()}
   defp process_limited_request(op_type, cost, bucket, adaptive, state) do
     # Calculate delay based on adaptive backoff
     delay_ms = trunc(bucket.refill_interval * adaptive.backoff_multiplier)
@@ -335,9 +335,15 @@ defmodule DeribitEx.DeribitRateLimitHandler do
     # Emit telemetry for rate-limited request
     emit_request_limited_telemetry(op_type, cost, delay_ms, bucket, adaptive)
 
-    # Update state and indicate backoff needed
+    # Update state and indicate rate limiting needed
     new_state = %{state | bucket: bucket, adaptive: adaptive}
-    {:backoff, delay_ms, new_state}
+    
+    # If the backoff is small, we'll queue the request, otherwise reject it
+    if delay_ms < 1000 do
+      {:queue, new_state} 
+    else
+      {:reject, delay_ms, new_state}
+    end
   end
 
   # Update response handlers for a request with ID

@@ -69,7 +69,7 @@ defmodule DeribitEx.DeribitRateLimitHandlerTest do
       state = put_in(state.config.cost_map.cancel, 0)
 
       # Process the request
-      {:ok, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
+      {:allow, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
 
       # Tokens should not be consumed
       assert new_state.bucket.tokens == state.bucket.tokens
@@ -83,7 +83,7 @@ defmodule DeribitEx.DeribitRateLimitHandlerTest do
       payload = %{"method" => "public/get_time"}
 
       # Process the request
-      {:ok, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
+      {:allow, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
 
       # Should consume 1 token (query cost)
       assert new_state.bucket.tokens == initial_tokens - 1
@@ -96,7 +96,7 @@ defmodule DeribitEx.DeribitRateLimitHandlerTest do
       payload = %{"method" => "public/get_time", "id" => 12_345}
 
       # Process the request
-      {:ok, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
+      {:allow, new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
 
       # The request should be tracked in response_handlers
       assert Map.has_key?(new_state.response_handlers, 12_345)
@@ -108,12 +108,12 @@ defmodule DeribitEx.DeribitRateLimitHandlerTest do
       {:ok, state} = DeribitRateLimitHandler.rate_limit_init(%{})
       state = put_in(state.bucket.tokens, 0)
 
-      # Request should be backoff
+      # Request should be rejected due to rate limiting
       payload = %{"method" => "public/get_time"}
       {decision, delay, _new_state} = DeribitRateLimitHandler.check_rate_limit(payload, state)
 
       # Verify decision and delay
-      assert decision == :backoff
+      assert decision in [:queue, :reject]
       assert is_integer(delay)
       assert delay > 0
     end

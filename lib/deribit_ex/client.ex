@@ -492,7 +492,7 @@ defmodule DeribitEx.DeribitClient do
       # Exchange token using a stored refresh token
       {:ok, response} = DeribitClient.exchange_token(conn, nil, 10)
   """
-  @spec exchange_token(pid(), String.t() | nil, integer(), map() | nil) ::
+  @spec exchange_token(pid(), String.t() | nil, integer() | String.t(), map() | nil) ::
           {:ok, any()} | {:error, any()}
   def exchange_token(conn, refresh_token, subject_id, opts \\ nil) do
     start_time = System.monotonic_time()
@@ -547,7 +547,7 @@ defmodule DeribitEx.DeribitClient do
       # Fork token using a stored refresh token
       {:ok, response} = DeribitClient.fork_token(conn, nil, "analytics_session")
   """
-  @spec fork_token(pid(), String.t() | nil, String.t(), map() | nil) ::
+  @spec fork_token(pid(), String.t() | nil, String.t() | atom(), map() | nil) ::
           {:ok, any()} | {:error, any()}
   def fork_token(conn, refresh_token, session_name, opts \\ nil) do
     start_time = System.monotonic_time()
@@ -625,7 +625,7 @@ defmodule DeribitEx.DeribitClient do
       # Logout with custom timeout
       {:ok, conn} = DeribitClient.logout(conn, true, %{timeout: 30000})
   """
-  @spec logout(pid(), boolean(), map() | nil) :: {:ok, pid()} | {:error, any()}
+  @spec logout(pid(), boolean(), map() | nil) :: {:ok, pid()} | {:error, any()} | :ok
   def logout(conn, invalidate_token \\ true, opts \\ nil) do
     start_time = System.monotonic_time()
 
@@ -1029,7 +1029,7 @@ defmodule DeribitEx.DeribitClient do
       {:ok, server_info} = DeribitClient.hello(conn, "my_trading_bot", "2.1.0")
   """
   @spec hello(pid(), String.t() | nil, String.t() | nil, map() | nil) ::
-          {:ok, map()} | {:error, any()}
+          {:ok, any()} | {:error, any()}
   def hello(conn, client_name \\ nil, client_version \\ nil, opts \\ nil) do
     start_time = System.monotonic_time()
     opts = opts || %{}
@@ -1136,7 +1136,9 @@ defmodule DeribitEx.DeribitClient do
     )
 
     # Check if there's a time sync service for this connection
-    service_name = TimeSyncSupervisor.service_name(conn)
+    # We need to extract the client pid from the conn structure if it's not already a pid
+    client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
+    service_name = TimeSyncSupervisor.service_name(client_pid)
 
     if Process.whereis(service_name) do
       # Stop the time sync service

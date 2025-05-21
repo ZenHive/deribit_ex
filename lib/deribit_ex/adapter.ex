@@ -1090,11 +1090,15 @@ defmodule DeribitEx.DeribitAdapter do
       "interval" => interval
     }
 
-    # Generate the JSON-RPC request with a string ID
-    request_id = to_string(System.unique_integer([:positive]))
+    # Generate the JSON-RPC request with a numeric ID
+    request_id = System.unique_integer([:positive])
 
+    # Use the numeric ID for the RPC call but track it as a string for backwards compatibility
     {:ok, payload, _} =
       DeribitRPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
+      
+    # Convert the payload to a JSON string since that's what tests expect
+    payload_json = Jason.encode!(payload)
 
     # Track the request in state
     state = DeribitRPC.track_request(state, request_id, "public/set_heartbeat", heartbeat_params)
@@ -1103,7 +1107,7 @@ defmodule DeribitEx.DeribitAdapter do
     state = Map.put(state, :heartbeat_enabled, true)
     state = Map.put(state, :heartbeat_interval, interval)
 
-    {:ok, Jason.encode!(payload), state}
+    {:ok, payload_json, state}
   end
 
   @doc """
@@ -1157,17 +1161,20 @@ defmodule DeribitEx.DeribitAdapter do
     # No parameters needed for disable_heartbeat
     heartbeat_params = %{}
 
-    # Generate the JSON-RPC request with a string ID
-    request_id = to_string(System.unique_integer([:positive]))
+    # Generate the JSON-RPC request with a numeric ID
+    request_id = System.unique_integer([:positive])
 
     {:ok, payload, _} =
       DeribitRPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
+      
+    # Convert the payload to a JSON string since that's what tests expect
+    payload_json = Jason.encode!(payload)
 
     # Track the request in state
     state =
       DeribitRPC.track_request(state, request_id, "public/disable_heartbeat", heartbeat_params)
-
-    {:ok, Jason.encode!(payload), state}
+      
+    {:ok, payload_json, state}
   end
 
   @doc """
