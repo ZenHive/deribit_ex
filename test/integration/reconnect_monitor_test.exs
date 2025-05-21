@@ -3,7 +3,7 @@ defmodule DeribitEx.ReconnectMonitorTest do
   require Logger
   
   @moduletag :integration
-  @moduletag timeout: 120_000 # Increase timeout for extended monitoring
+  @moduletag timeout: 20_000 # Increase timeout for extended monitoring
   
   test "monitors reconnections when heartbeat is enabled" do
     # Configure logger for detailed connection info
@@ -16,7 +16,15 @@ defmodule DeribitEx.ReconnectMonitorTest do
     {:ok, conn} = DeribitEx.Client.connect()
     
     # Register a process to monitor connection events
-    Process.monitor(conn)
+    # Extract the actual connection process PID from the ClientConn struct
+    conn_pid = if is_pid(conn) do
+      conn
+    else
+      Map.get(conn, :transport_pid)
+    end
+    
+    # Now monitor the actual process
+    Process.monitor(conn_pid)
     
     # Monitor our client for disconnection/reconnection
     spawn_link(fn -> 

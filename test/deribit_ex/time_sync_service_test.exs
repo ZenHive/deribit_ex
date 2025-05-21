@@ -17,6 +17,7 @@ defmodule DeribitEx.TimeSyncServiceTest do
     end
 
     # Mock get_time implementation that returns a fixed server time
+    # This implementation doesn't use WebsockexNova.Client.send_json at all
     def get_time(_client_pid, _opts \\ nil) do
       # Fixed server time that's 5000ms ahead of local time
       server_time = System.system_time(:millisecond) + 5000
@@ -34,8 +35,8 @@ defmodule DeribitEx.TimeSyncServiceTest do
       {:ok, client_pid} = MockClient.start_link([])
 
       # Override the module reference to use our mock
-      original_deribit_client = Application.get_env(:market_maker, :deribit_client_module)
-      Application.put_env(:market_maker, :deribit_client_module, MockClient)
+      original_deribit_client = Application.get_env(:deribit_ex, :deribit_client_module)
+      Application.put_env(:deribit_ex, :deribit_client_module, MockClient)
 
       # Start the time sync service
       {:ok, service_pid} = TimeSyncService.start_link(client_pid, sync_interval: 1000)
@@ -46,9 +47,9 @@ defmodule DeribitEx.TimeSyncServiceTest do
       on_exit(fn ->
         # Reset the original module if it was set
         if original_deribit_client do
-          Application.put_env(:market_maker, :deribit_client_module, original_deribit_client)
+          Application.put_env(:deribit_ex, :deribit_client_module, original_deribit_client)
         else
-          Application.delete_env(:market_maker, :deribit_client_module)
+          Application.delete_env(:deribit_ex, :deribit_client_module)
         end
       end)
 
