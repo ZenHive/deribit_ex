@@ -157,7 +157,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
         * `:recovery_increase` - Rate at which capacity recovers
         * `:recovery_interval` - Interval between capacity recovery attempts
         * `:telemetry_prefix` - Prefix for telemetry events
-  
+
   ## Returns
     * `{:ok, state}` - Initialized rate limiter state
   """
@@ -256,7 +256,7 @@ defmodule DeribitEx.DeribitRateLimitHandler do
     * `{:ok, state}` - Request is allowed, with updated state
     * `{:backoff, delay_ms, state}` - Request should be delayed by specified ms
   """
-  @spec check_rate_limit(map() | String.t(), state()) :: 
+  @spec check_rate_limit(map() | String.t(), state()) ::
           {:allow, state()} | {:queue, state()} | {:reject, any(), state()}
   def check_rate_limit(request, state) do
     # Extract request payload and ID
@@ -337,10 +337,10 @@ defmodule DeribitEx.DeribitRateLimitHandler do
 
     # Update state and indicate rate limiting needed
     new_state = %{state | bucket: bucket, adaptive: adaptive}
-    
+
     # If the backoff is small, we'll queue the request, otherwise reject it
     if delay_ms < 1000 do
-      {:queue, new_state} 
+      {:queue, new_state}
     else
       {:reject, delay_ms, new_state}
     end

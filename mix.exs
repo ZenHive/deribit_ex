@@ -2,7 +2,7 @@ defmodule DeribitEx.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/username/deribit_ex"
+  @source_url "https://github.com/ZenHive/deribit_ex"
 
   def project do
     [
@@ -68,13 +68,13 @@ defmodule DeribitEx.MixProject do
   defp package do
     [
       name: "deribit_ex",
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md CONTRIBUTING.md),
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md"
       },
-      maintainers: ["Your Name"]
+      maintainers: ["E.FU"]
     ]
   end
 
@@ -88,21 +88,21 @@ defmodule DeribitEx.MixProject do
       ],
       groups_for_modules: [
         "Core Components": [
-          DeribitEx.DeribitClient,
-          DeribitEx.DeribitRPC,
-          DeribitEx.DeribitAdapter
+          DeribitEx.Client,
+          DeribitEx.RPC,
+          DeribitEx.Adapter
         ],
-        "Authentication": [
+        Authentication: [
           DeribitEx.TokenManager,
           DeribitEx.SessionContext
         ],
         "WebSocket Management": [
           DeribitEx.ResubscriptionHandler,
-          DeribitEx.DeribitRateLimitHandler,
+          DeribitEx.RateLimitHandler,
           DeribitEx.TimeSyncService,
           DeribitEx.TimeSyncSupervisor
         ],
-        "Utilities": [
+        Utilities: [
           DeribitEx.OrderContext,
           DeribitEx.Telemetry
         ]

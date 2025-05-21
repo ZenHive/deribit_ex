@@ -1096,7 +1096,7 @@ defmodule DeribitEx.DeribitAdapter do
     # Use the numeric ID for the RPC call but track it as a string for backwards compatibility
     {:ok, payload, _} =
       DeribitRPC.generate_request("public/set_heartbeat", heartbeat_params, request_id)
-      
+
     # Convert the payload to a JSON string since that's what tests expect
     payload_json = Jason.encode!(payload)
 
@@ -1166,14 +1166,14 @@ defmodule DeribitEx.DeribitAdapter do
 
     {:ok, payload, _} =
       DeribitRPC.generate_request("public/disable_heartbeat", heartbeat_params, request_id)
-      
+
     # Convert the payload to a JSON string since that's what tests expect
     payload_json = Jason.encode!(payload)
 
     # Track the request in state
     state =
       DeribitRPC.track_request(state, request_id, "public/disable_heartbeat", heartbeat_params)
-      
+
     {:ok, payload_json, state}
   end
 

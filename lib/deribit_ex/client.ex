@@ -195,6 +195,7 @@ defmodule DeribitEx.DeribitClient do
           # Start time sync service
           # Extract client_pid from conn if it's not already a pid
           client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
+
           {:ok, _sync_pid} =
             TimeSyncSupervisor.start_service(client_pid,
               sync_interval: sync_interval
@@ -1489,6 +1490,7 @@ defmodule DeribitEx.DeribitClient do
 
         # Make sure we're passing a pid
         client_pid = if is_pid(conn), do: conn, else: conn.transport_pid
+
         {:ok, sync_pid} =
           TimeSyncSupervisor.start_service(client_pid,
             sync_interval: sync_interval

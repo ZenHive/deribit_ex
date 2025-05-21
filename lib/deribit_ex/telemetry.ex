@@ -5,19 +5,19 @@ defmodule DeribitEx.Telemetry do
   This module provides a consistent interface for emitting telemetry events
   throughout the library. Use these functions instead of calling :telemetry.execute
   directly to ensure consistent event naming and metadata structure.
-  
+
   ## Event Categories
-  
+
   DeribitEx emits telemetry events in the following categories:
-  
+
   - Connection: Events related to WebSocket connection lifecycle
   - RPC: Events for request/response operations
   - Auth: Authentication-related events
   - Subscription: Channel subscription events
   - Order Context: Order tracking events
-  
+
   ## Example Usage
-  
+
   ```elixir
   :telemetry.attach(
     "deribit-auth-handler",
@@ -57,9 +57,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when a connection is established.
-  
+
   ## Parameters
-  
+
   - `connection`: The WebSocket connection identifier
   - `metadata`: Additional metadata to include with the event
   """
@@ -74,9 +74,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when a connection is closed.
-  
+
   ## Parameters
-  
+
   - `connection`: The WebSocket connection identifier
   - `reason`: The reason for the connection closure
   - `metadata`: Additional metadata to include with the event
@@ -92,9 +92,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when an RPC request is sent.
-  
+
   ## Parameters
-  
+
   - `type`: The type of RPC request (:auth, :public, :private, etc.)
   - `method`: The RPC method name
   - `metadata`: Additional metadata to include with the event
@@ -110,9 +110,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when an RPC response is received.
-  
+
   ## Parameters
-  
+
   - `type`: The type of RPC request that this is a response to
   - `method`: The RPC method name
   - `duration`: The duration of the request in native time units
@@ -129,9 +129,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when authentication is successful.
-  
+
   ## Parameters
-  
+
   - `connection`: The WebSocket connection identifier
   - `metadata`: Additional metadata to include with the event
   """
@@ -146,9 +146,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when authentication fails.
-  
+
   ## Parameters
-  
+
   - `connection`: The WebSocket connection identifier
   - `reason`: The reason for the authentication failure
   - `metadata`: Additional metadata to include with the event
@@ -164,9 +164,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when a subscription is created.
-  
+
   ## Parameters
-  
+
   - `channel`: The channel name that was subscribed to
   - `metadata`: Additional metadata to include with the event
   """
@@ -181,9 +181,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when a subscription is removed.
-  
+
   ## Parameters
-  
+
   - `channel`: The channel name that was unsubscribed from
   - `metadata`: Additional metadata to include with the event
   """
@@ -198,9 +198,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when an order is registered.
-  
+
   ## Parameters
-  
+
   - `order_id`: The ID of the order
   - `session_id`: The session ID that the order belongs to
   - `metadata`: Additional metadata to include with the event
@@ -216,9 +216,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when an order is updated.
-  
+
   ## Parameters
-  
+
   - `order_id`: The ID of the order
   - `session_id`: The session ID that the order belongs to
   - `status`: The new status of the order
@@ -235,9 +235,9 @@ defmodule DeribitEx.Telemetry do
 
   @doc """
   Emits a telemetry event when a session transition occurs.
-  
+
   ## Parameters
-  
+
   - `prev_session_id`: The previous session ID
   - `new_session_id`: The new session ID
   - `transition_type`: The type of transition (:refresh, :exchange, :fork, :logout)

@@ -204,7 +204,7 @@ defmodule DeribitEx.TimeSyncService do
   end
 
   @impl true
-  @spec handle_call(:get_delta | :sync_info, GenServer.from(), state()) :: 
+  @spec handle_call(:get_delta | :sync_info, GenServer.from(), state()) ::
           {:reply, time_delta() | sync_info(), state()}
   def handle_call(:get_delta, _from, state) do
     {:reply, state.delta, state}

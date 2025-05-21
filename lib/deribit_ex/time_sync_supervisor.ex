@@ -4,16 +4,16 @@ defmodule DeribitEx.TimeSyncSupervisor do
 
   This supervisor is responsible for starting and supervising TimeSyncService
   processes. It ensures that the services restart properly if they crash.
-  
+
   ## Usage
-  
+
   ```elixir
   # Start the supervisor
   {:ok, supervisor_pid} = DeribitEx.TimeSyncSupervisor.start_link([])
-  
+
   # Start a time sync service for a client
   {:ok, service_pid} = DeribitEx.TimeSyncSupervisor.start_service(client_pid)
-  
+
   # Get the service name for a client
   service_name = DeribitEx.TimeSyncSupervisor.service_name(client_pid)
   ```
