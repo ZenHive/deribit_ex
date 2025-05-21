@@ -54,8 +54,8 @@ defmodule DeribitEx.HeartbeatTest do
       assert decoded["jsonrpc"] == "2.0"
       assert is_integer(decoded["id"])
       
-      # State should have the request tracked
-      assert Map.has_key?(updated_state.requests, decoded["id"])
+      # State should remain unchanged with stateless approach
+      assert updated_state == state
     end
     
     test "handle_frame processes legacy test_request messages correctly" do
@@ -84,8 +84,8 @@ defmodule DeribitEx.HeartbeatTest do
       assert decoded["jsonrpc"] == "2.0"
       assert is_integer(decoded["id"])
       
-      # State should have the request tracked
-      assert Map.has_key?(updated_state.requests, decoded["id"])
+      # State should remain unchanged with stateless approach
+      assert updated_state == state
     end
     
     test "handle_frame passes other messages through" do

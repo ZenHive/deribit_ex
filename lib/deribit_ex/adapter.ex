@@ -11,8 +11,10 @@ defmodule DeribitEx.Adapter do
   alias WebsockexNova.Behaviors.AuthHandler
   alias WebsockexNova.Behaviors.ConnectionHandler
   alias WebsockexNova.Behaviors.SubscriptionHandler
-  alias WebsockexNova.Defaults.DefaultMessageHandler
   alias WebsockexNova.Behaviors.FrameHandler
+  alias WebsockexNova.Defaults.DefaultMessageHandler
+  
+  @behaviour WebsockexNova.Behaviors.FrameHandler
 
   require Logger
 
@@ -758,7 +760,8 @@ defmodule DeribitEx.Adapter do
 
     case Map.get(requests, request_id) do
       nil ->
-        # Request not found or already processed
+        # Request not found or already processed - this is normal for heartbeat responses
+        # which are handled immediately and not tracked
         {:ok, state}
 
       request ->
@@ -1193,48 +1196,25 @@ defmodule DeribitEx.Adapter do
   @spec handle_frame(atom(), String.t(), map()) :: {:ok, map()} | {:reply, atom(), String.t(), map()}
   def handle_frame(:text, frame_data, state) do
     case Jason.decode(frame_data) do
-      {:ok, %{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = message} ->
-        # Generate a response to the heartbeat test_request
-        test_params = Map.get(message, "params", %{}) |> Map.take(["expected_result"])
-        
-        # Generate the JSON-RPC request
-        {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
-        
-        # Track the request in state
-        state = RPC.track_request(state, request_id, "public/test", test_params)
-        
-        # Encode the payload and send the response
+      {:ok, %{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = _message} ->
+        # For heartbeat test_request messages, send a test response immediately
+        # We don't need any message-specific params from the original message
+        # Just send an empty public/test request
+        {:ok, payload, _request_id} = RPC.generate_request("public/test", %{})
         encoded_payload = Jason.encode!(payload)
         
-        # Log the auto-response at debug level
-        Logger.debug(
-          "[Adapter] Auto-responding to test_request with public/test. " <>
-            "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
-        )
+        # Don't track the request or create any state - keep it stateless
+        # This is important for handling large volumes of heartbeats
         
-        # Return as a frame-level response
+        # Return the response immediately at the frame level
         {:reply, :text, encoded_payload, state}
         
-      {:ok, %{"method" => "test_request"} = message} ->
-        # Legacy format for test_request (directly in method)
-        test_params = Map.get(message, "params", %{}) |> Map.take(["expected_result"])
-        
-        # Generate the JSON-RPC request
-        {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
-        
-        # Track the request in state
-        state = RPC.track_request(state, request_id, "public/test", test_params)
-        
-        # Encode the payload and send the response
+      {:ok, %{"method" => "test_request"}} ->
+        # Legacy format handling - same approach as above
+        {:ok, payload, _request_id} = RPC.generate_request("public/test", %{})
         encoded_payload = Jason.encode!(payload)
         
-        # Log the auto-response at debug level
-        Logger.debug(
-          "[Adapter] Auto-responding to test_request with public/test. " <>
-            "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
-        )
-        
-        # Return as a frame-level response
+        # Return the response immediately at the frame level
         {:reply, :text, encoded_payload, state}
         
       _ ->
