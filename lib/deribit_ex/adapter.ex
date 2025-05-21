@@ -605,15 +605,51 @@ defmodule DeribitEx.Adapter do
   - Other messages: Delegates to DefaultMessageHandler
   """
   @spec handle_message(map(), map()) ::
-          {:needs_auth, map(), map()} | {:ok, map(), map()} | {:error, any(), map()}
+          {:needs_auth, map(), map()} | {:ok, map(), map()} | {:error, any(), map()} | {:reply, String.t(), map()}
   def handle_message(%{"error" => %{"code" => 13_778}} = message, state) do
     # Handle "raw_subscriptions_not_available_for_unauthorized" error
     # This means we need to authenticate first
     {:needs_auth, message, state}
   end
   
-  # We no longer need to handle test_request at the message level
-  # This is now handled at the frame level in handle_frame
+  # Handle test_request messages at the message level for backward compatibility
+  # This is the original implementation that tests are expecting
+  def handle_message(%{"method" => "test_request"} = message, state) do
+    # Extract expected_result if present for echo back
+    expected_result = get_in(message, ["params", "expected_result"])
+    
+    # Create parameters for the response
+    params = if expected_result, do: %{"expected_result" => expected_result}, else: %{}
+    
+    # Generate the RPC request with params 
+    {:ok, payload, request_id} = DeribitEx.RPC.generate_request("public/test", params)
+    
+    # Track the request 
+    state = DeribitEx.RPC.track_request(state, request_id, "public/test", params)
+    
+    # We'll process it immediately
+    state = Map.put(state, :last_message, message)
+    state = Map.update(state, :processed_count, 1, &(&1 + 1))
+    
+    # Return the formatted reply with encoded payload
+    {:reply, Jason.encode!(payload), state}
+  end
+  
+  # Also handle heartbeat test_request messages at the message level for backward compatibility
+  def handle_message(%{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = message, state) do
+    # For compatibility with tests, treat this like a test_request
+    {:ok, payload, request_id} = DeribitEx.RPC.generate_request("public/test", %{})
+    
+    # Track the request
+    state = DeribitEx.RPC.track_request(state, request_id, "public/test", %{})
+    
+    # We'll process it immediately
+    state = Map.put(state, :last_message, message)
+    state = Map.update(state, :processed_count, 1, &(&1 + 1))
+    
+    # Return the formatted reply with encoded payload
+    {:reply, Jason.encode!(payload), state}
+  end
 
   def handle_message(%{"jsonrpc" => "2.0", "id" => id} = message, state) when not is_nil(id) do
     # Process JSON-RPC response with an ID
