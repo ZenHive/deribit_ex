@@ -612,16 +612,9 @@ defmodule DeribitEx.Adapter do
     # This means we need to authenticate first
     {:needs_auth, message, state}
   end
-
-  def handle_message(%{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = message, state) do
-    # Auto-respond to test_request heartbeat messages from the server by sending a public/test RPC
-    handle_test_request(Map.get(message, "params", %{}), state)
-  end
   
-  def handle_message(%{"method" => "test_request", "params" => params}, state) do
-    # Legacy handler for direct test_request messages (retained for backward compatibility)
-    handle_test_request(params, state)
-  end
+  # We no longer need to handle test_request at the message level
+  # This is now handled at the frame level in handle_frame
 
   def handle_message(%{"jsonrpc" => "2.0", "id" => id} = message, state) when not is_nil(id) do
     # Process JSON-RPC response with an ID
@@ -633,37 +626,7 @@ defmodule DeribitEx.Adapter do
     DefaultMessageHandler.handle_message(message, state)
   end
 
-  # Handle test request from Deribit heartbeat mechanism
-  defp handle_test_request(params, state) do
-    # Extract any params like expected_result that should be echoed back
-    test_params = Map.take(params, ["expected_result"])
-
-    # Generate the JSON-RPC request
-    {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
-
-    # Track the request in state
-    state = RPC.track_request(state, request_id, "public/test", test_params)
-
-    # Emit telemetry for test request handling
-    :telemetry.execute(
-      [:deribit_ex, :adapter, :test_request, :handled],
-      %{system_time: System.system_time()},
-      %{request_id: request_id}
-    )
-
-    # Return the JSON payload to be sent by WebsockexNova
-    # This ensures the message is actually sent in response to test_request
-    encoded_payload = Jason.encode!(payload)
-
-    # Log the auto-response at debug level
-    Logger.debug(
-      "[Adapter] Auto-responding to test_request with public/test. " <>
-        "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
-    )
-
-    # Return special tuple that tells WebsockexNova to send the response
-    {:reply, encoded_payload, state}
-  end
+  # handle_test_request has been moved directly into handle_frame
 
   # Process a JSON-RPC response with an ID
   defp process_jsonrpc_response(message, id, state) do
@@ -1220,18 +1183,68 @@ defmodule DeribitEx.Adapter do
 
   def handle_disable_heartbeat_response(_other, state), do: {:ok, state}
 
-  @impl FrameHandler
+  @impl WebsockexNova.Behaviors.FrameHandler
   @doc """
   Handles raw WebSocket frames from the Deribit API.
 
   This function is called for each incoming WebSocket frame before JSON parsing.
-  Heartbeat handling is now done at the message level through handle_message 
-  for improved reliability.
+  Handles heartbeat test_request messages directly at the frame level.
   """
-  @spec handle_frame(atom(), String.t(), map()) :: {:ok, map()}
+  @spec handle_frame(atom(), String.t(), map()) :: {:ok, map()} | {:reply, atom(), String.t(), map()}
+  def handle_frame(:text, frame_data, state) do
+    case Jason.decode(frame_data) do
+      {:ok, %{"method" => "heartbeat", "params" => %{"type" => "test_request"}} = message} ->
+        # Generate a response to the heartbeat test_request
+        test_params = Map.get(message, "params", %{}) |> Map.take(["expected_result"])
+        
+        # Generate the JSON-RPC request
+        {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
+        
+        # Track the request in state
+        state = RPC.track_request(state, request_id, "public/test", test_params)
+        
+        # Encode the payload and send the response
+        encoded_payload = Jason.encode!(payload)
+        
+        # Log the auto-response at debug level
+        Logger.debug(
+          "[Adapter] Auto-responding to test_request with public/test. " <>
+            "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
+        )
+        
+        # Return as a frame-level response
+        {:reply, :text, encoded_payload, state}
+        
+      {:ok, %{"method" => "test_request"} = message} ->
+        # Legacy format for test_request (directly in method)
+        test_params = Map.get(message, "params", %{}) |> Map.take(["expected_result"])
+        
+        # Generate the JSON-RPC request
+        {:ok, payload, request_id} = RPC.generate_request("public/test", test_params)
+        
+        # Track the request in state
+        state = RPC.track_request(state, request_id, "public/test", test_params)
+        
+        # Encode the payload and send the response
+        encoded_payload = Jason.encode!(payload)
+        
+        # Log the auto-response at debug level
+        Logger.debug(
+          "[Adapter] Auto-responding to test_request with public/test. " <>
+            "Expected result: #{inspect(Map.get(test_params, "expected_result", "none"))}"
+        )
+        
+        # Return as a frame-level response
+        {:reply, :text, encoded_payload, state}
+        
+      _ ->
+        # Let all other frames be processed by the regular message flow
+        {:ok, state}
+    end
+  end
+  
   def handle_frame(_frame_type, _frame_data, state) do
-    # Delegate all frame handling to the normal message processing flow
-    # Heartbeat test_request messages are handled in handle_message
+    # For non-text frames, just pass them through
     {:ok, state}
   end
 

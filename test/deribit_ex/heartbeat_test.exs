@@ -28,7 +28,7 @@ defmodule DeribitEx.HeartbeatTest do
       assert {:ok, _updated_state} = result
     end
     
-    test "handle_message processes test_request heartbeat messages correctly" do
+    test "handle_frame processes test_request heartbeat messages correctly" do
       # Create a minimal state
       state = %{heartbeat_enabled: true, heartbeat_interval: 30, requests: %{}}
       
@@ -39,11 +39,14 @@ defmodule DeribitEx.HeartbeatTest do
         "jsonrpc" => "2.0"
       }
       
-      # Call the handle_message function directly
-      result = Adapter.handle_message(message, state)
+      # Encode the message to JSON
+      frame_data = Jason.encode!(message)
       
-      # Verify the result - should send a reply
-      assert {:reply, encoded_payload, updated_state} = result
+      # Call the handle_frame function directly
+      result = Adapter.handle_frame(:text, frame_data, state)
+      
+      # Verify the result - should send a reply with frame format
+      assert {:reply, :text, encoded_payload, updated_state} = result
       
       # The encoded payload should be a JSON-RPC public/test request
       decoded = Jason.decode!(encoded_payload)
@@ -55,7 +58,7 @@ defmodule DeribitEx.HeartbeatTest do
       assert Map.has_key?(updated_state.requests, decoded["id"])
     end
     
-    test "handle_message processes legacy test_request messages correctly" do
+    test "handle_frame processes legacy test_request messages correctly" do
       # Create a minimal state
       state = %{heartbeat_enabled: true, heartbeat_interval: 30, requests: %{}}
       
@@ -66,11 +69,14 @@ defmodule DeribitEx.HeartbeatTest do
         "jsonrpc" => "2.0"
       }
       
-      # Call the handle_message function directly
-      result = Adapter.handle_message(message, state)
+      # Encode the message to JSON
+      frame_data = Jason.encode!(message)
       
-      # Verify the result - should send a reply
-      assert {:reply, encoded_payload, updated_state} = result
+      # Call the handle_frame function directly
+      result = Adapter.handle_frame(:text, frame_data, state)
+      
+      # Verify the result - should send a reply with frame format
+      assert {:reply, :text, encoded_payload, updated_state} = result
       
       # The encoded payload should be a JSON-RPC public/test request
       decoded = Jason.decode!(encoded_payload)
@@ -82,46 +88,25 @@ defmodule DeribitEx.HeartbeatTest do
       assert Map.has_key?(updated_state.requests, decoded["id"])
     end
     
-    test "handle_frame processes test_request heartbeat frames correctly" do
+    test "handle_frame passes other messages through" do
       # Create a minimal state
       state = %{heartbeat_enabled: true, heartbeat_interval: 30}
       
-      # Create a raw WebSocket frame with a test_request message
-      frame_data = Jason.encode!(%{
-        "method" => "heartbeat",
-        "params" => %{"type" => "test_request"},
+      # Create a regular message that isn't a test_request
+      message = %{
+        "method" => "regular_method",
+        "params" => %{},
         "jsonrpc" => "2.0"
-      })
+      }
+      
+      # Encode the message to JSON
+      frame_data = Jason.encode!(message)
       
       # Call the handle_frame function directly
       result = Adapter.handle_frame(:text, frame_data, state)
       
-      # Verify the result - should send a reply
-      assert {:reply, encoded_payload, _updated_state} = result
-      
-      # The encoded payload should be a JSON-RPC public/test request
-      decoded = Jason.decode!(encoded_payload)
-      assert decoded["method"] == "public/test"
-      assert decoded["jsonrpc"] == "2.0"
-      assert is_integer(decoded["id"])
-    end
-    
-    test "handle_frame ignores non-heartbeat frames" do
-      # Create a minimal state
-      state = %{heartbeat_enabled: true, heartbeat_interval: 30}
-      
-      # Create a raw WebSocket frame with a non-heartbeat message
-      frame_data = Jason.encode!(%{
-        "jsonrpc" => "2.0",
-        "method" => "public/get_time",
-        "id" => 42
-      })
-      
-      # Call the handle_frame function directly
-      result = Adapter.handle_frame(:text, frame_data, state)
-      
-      # Verify the result - should not send a reply
-      assert {:ok, _state} = result
+      # Verify the result - should just pass through
+      assert {:ok, ^state} = result
     end
   end
 
