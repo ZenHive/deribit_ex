@@ -1,0 +1,793 @@
+# DeribitEx Rules
+
+## Code Optimization Guidelines
+
+- **All Elixir code files must balance token optimization with readability**
+
+  - **Module Documentation**: Use concise, structured `@moduledoc` with clear bullet points for key components
+  - **Function Documentation**: Optimize `@doc` blocks with a single-sentence summary followed by structured details
+  - **Code Organization**: Optimize code structure for both machine and human comprehension
+
+  - **DO (Optimized Documentation):**
+
+    ```elixir
+    @moduledoc """
+    Provides real-time WebSocket communication with Deribit exchange.
+
+    - Handles authentication and token management
+    - Manages subscriptions and message routing
+    - Emits telemetry for monitoring and debugging
+    - Supports automatic reconnection and resubscription
+    """
+
+    @doc """
+    Subscribes to market data for the specified instrument.
+
+    Accepts options for depth and update frequency.
+    """
+    ```
+
+  - **DON'T (Verbose Documentation):**
+
+    ```elixir
+    @moduledoc """
+    This module provides real-time WebSocket communication capabilities with the Deribit
+    cryptocurrency exchange. It allows applications to receive live market data updates,
+    execute trades, and manage account information through WebSocket connections instead
+    of polling REST APIs. The module handles authentication flows, token management,
+    subscription management, and automatic reconnection scenarios.
+    """
+
+    @doc """
+    Subscribes to market data updates for a specific trading instrument.
+
+    This function performs the subscription to the market data channel for the specified
+    instrument. It accepts options to configure various aspects of the subscription
+    such as the depth of the order book and the frequency of updates. Once subscribed,
+    the market data updates will be streamed to the calling process or a designated
+    handler process.
+    """
+    ```
+
+  - **DO (Optimized Code Structure):**
+
+    ```elixir
+    # Group related functions together
+    # Use clear naming conventions
+    # Optimize function parameter patterns
+    def subscribe_channel(%{channel: channel} = params, opts \\ []) do
+      callback_pid = Keyword.get(opts, :callback_pid, self())
+      
+      with {:ok, conn} <- ensure_connection(),
+           {:ok, sub_id} <- send_subscription(conn, channel, callback_pid) do
+        {:ok, sub_id}
+      else
+        error -> {:error, error}
+      end
+    end
+
+    defp ensure_connection(), do: GenServer.call(__MODULE__, :get_connection)
+
+    defp send_subscription(conn, channel, callback_pid) do
+      RPC.call(conn, "public/subscribe", %{channels: [channel]}, callback_pid)
+    end
+    ```
+
+  - **DON'T (Suboptimal Code Structure):**
+
+    ```elixir
+    # Functions scattered without logical grouping
+    # Unclear naming or verbosity
+    # Repetitive code or complex conditionals
+    def subscribe_to_channel_with_callback(channel_specification, options_list \\ []) do
+      callback_process_id = Keyword.get(options_list, :callback_process_identifier, self())
+      connection_options = Keyword.get(options_list, :connection_options, [])
+      
+      case get_websocket_connection_instance(connection_options) do
+        {:ok, websocket_connection} ->
+          connection_is_alive = Process.alive?(websocket_connection.pid)
+          
+          if connection_is_alive do
+            subscription_parameters = %{channels: [channel_specification]}
+            RPC.call(websocket_connection, "public/subscribe", subscription_parameters, callback_process_id)
+          else
+            {:error, :connection_not_alive}
+          end
+        
+        error_result ->
+          {:error, error_result}
+      end
+    end
+    ```
+
+- **Rationale:**
+  - Reduces token usage and cognitive load while maintaining clarity
+  - Improves code maintainability and review efficiency
+  - Aligns code documentation with existing machine-readable documentation standards
+  - Speeds up AI tools' understanding of code patterns and intent
+  - Reduces error likelihood by favoring clear, consistent patterns
+
+## Integration Testing Requirements
+
+- **Core Principles**:
+
+  - Test with REAL Deribit APIs (NO mocks for API responses)
+  - Verify end-to-end functionality across component boundaries
+  - Test behavior under realistic conditions (network latency, market volatility)
+  - Document all test scenarios thoroughly
+
+- **Test Structure**:
+
+  - ✅ **DO**: Use real dependencies and document test scenarios
+
+    ```elixir
+    @tag :integration
+    test "subscribes and receives market data correctly", %{credentials: creds} do
+      # Use real Deribit testnet connection (no mocks)
+      {:ok, client} = DeribitEx.Client.connect(creds.client_id, creds.client_secret)
+      
+      # Test with realistic market conditions
+      {:ok, sub_id} = DeribitEx.Client.subscribe_orderbook(client, "BTC-PERPETUAL", self())
+      
+      assert_receive {:subscription_notification, %{channel: channel, data: data}}, 10_000
+      assert String.contains?(channel, "book.BTC-PERPETUAL")
+      assert is_map(data)
+    end
+    ```
+
+  - ❌ **DON'T**: Use mocks or oversimplified scenarios
+
+    ```elixir
+    # Bad: Using mocks instead of real dependencies
+    test "subscribes and receives market data" do
+      mock_client = MockDeribitClient.new()
+      MockDeribitClient.expect(mock_client, :subscribe_orderbook, fn _, _, _ -> 
+        {:ok, "sub_123"} 
+      end)
+      
+      assert {:ok, sub_id} = DeribitEx.Client.subscribe_orderbook(mock_client, "BTC-PERPETUAL", self())
+    end
+    ```
+
+- **Test Environment Requirements**:
+
+  - Use Deribit testnet for realistic testing
+  - Tag integration tests with `@tag :integration`
+  - Create helper modules in `test/support/integration/` for setup
+  - Ensure tests run both locally and in CI
+
+- **Scenario Coverage Required**:
+
+  - Happy path functionality (subscriptions, requests, authentication)
+  - Error cases with real error conditions (rate limits, invalid credentials)
+  - Edge cases (network interruptions, token expiration, reconnection)
+  - Concurrent operations and their interactions
+
+- **Documentation Requirements**:
+
+  - Document all scenarios in `docs/integration-test-scenarios/`
+  - Include setup requirements, preconditions
+  - Explain expected outcomes and verification points
+  - Update documentation when modifying integration tests
+
+- **Example Test Structure**:
+
+  ```elixir
+  defmodule DeribitEx.Integration.ReconnectionTest do
+    use DeribitEx.Integration.TestCase
+
+    @tag :integration
+    test "reconnects automatically after network interruption", %{credentials: creds} do
+      # 1. Connect to real Deribit API
+      {:ok, client} = DeribitEx.Client.connect(creds.client_id, creds.client_secret)
+      
+      # 2. Verify initial connection works
+      assert {:ok, _} = DeribitEx.Client.get_time(client)
+      
+      # 3. Simulate network interruption
+      Process.exit(client.adapter_pid, :kill)
+      
+      # 4. Verify automatic reconnection
+      wait_for_reconnection(client)
+      assert {:ok, _} = DeribitEx.Client.get_time(client)
+    end
+  end
+  ```
+
+## Multi-Agent Workflow for Elixir Development
+
+- **Core Roles**:
+
+  - **Planner**: Analyzes requirements, documents tasks with testable criteria
+  - **Executor**: Implements tasks following TDD principles
+  - **Reviewer**: Conducts thorough code reviews, runs static checks
+
+- **Required Documentation Structure:**
+
+  - `docs/Architecture.md`: System design, supervision hierarchies, component diagrams
+  - `docs/MVP.md`: Project roadmap and milestones
+  - `docs/TaskList.md`: Structured, human-readable task tracking
+  - `.cursor/scratchpad.md`: Temporary workspace for notes, progress tracking
+
+- **Task Requirements in `docs/TaskList.md`**:
+
+  ```markdown
+  - ID: FEAT001
+  - Description: Implement Module.function to handle X
+  - ExUnit Requirements: Test cases for normal flow, error states
+  - Integration Test Requirements: Real-dependency test scenarios
+  - Dependencies: Other related modules/tasks
+  - Status: Planned|In Progress|Review|Completed|Blocked
+  - Review Rating: 1-5
+  ```
+
+- **Development Workflow**:
+
+  - ✅ **DO**: Follow the TDD cycle (tests first, then implementation)
+
+    ```elixir
+    # First write the test
+    test "authenticates with valid credentials" do
+      assert {:ok, client} = DeribitEx.Client.connect(valid_client_id, valid_client_secret)
+      assert client.authenticated == true
+    end
+
+    # Then implement the function
+    @spec connect(String.t(), String.t()) :: {:ok, t()} | {:error, atom()}
+    def connect(client_id, client_secret) when is_binary(client_id) and is_binary(client_secret) do
+      with {:ok, adapter} <- start_adapter(),
+           {:ok, _} <- authenticate(adapter, client_id, client_secret) do
+        {:ok, %__MODULE__{adapter: adapter, authenticated: true}}
+      end
+    end
+    ```
+
+  - ❌ **DON'T**: Implement without tests or task documentation
+    ```elixir
+    # Missing tests, specs, and documentation
+    def connect(client_id, client_secret) do
+      # Implementation without validation or proper error handling
+      start_adapter_and_auth(client_id, client_secret)
+    end
+    ```
+
+- **Integration Testing Requirements**:
+
+  - All features must have integration tests
+  - Use real dependencies (no mocks)
+  - Test realistic scenarios including market conditions
+  - Integration tests must be documented in `docs/integration-test-scenarios/`
+
+- **Elixir Code Quality Standards**:
+  - All public functions must have `@spec` annotations
+  - All modules must have `@moduledoc` documentation
+  - Follow functional, declarative style with pattern matching
+  - Use tagged tuples for consistent error handling: `{:ok, result}` or `{:error, reason}`
+  - Pass all static checks: `mix format`, `mix credo --strict`, `mix dialyzer`
+
+## Simplicity Guidelines
+
+- **Foundational Principles**:
+
+  - Code simplicity is a primary feature, not an afterthought
+  - Implement the minimal viable solution first
+  - Each component has a limited "complexity budget"
+  - Create abstractions only with proven value (≥3 concrete examples)
+  - Start simple and add complexity incrementally
+  - Prioritize execution and practical operational efficiency
+  - Deliberately simplify solutions wherever possible, reducing overhead and maintenance costs
+
+- **Code Structure Guidelines**:
+
+  - ✅ **DO**: Keep modules and functions small and focused
+
+    ```elixir
+    # Simple, single-responsibility function
+    @spec validate_subscription_params(map()) :: {:ok, map()} | {:error, String.t()}
+    def validate_subscription_params(params) when is_map(params) do
+      with {:ok, _} <- validate_required_fields(params),
+           {:ok, _} <- validate_channel_format(params) do
+        {:ok, params}
+      else
+        {:error, reason} -> {:error, reason}
+      end
+    end
+    ```
+
+  - ❌ **DON'T**: Create complex abstractions prematurely
+
+    ```elixir
+    # Overly abstract, complex pattern with speculative functionality
+    defmodule ComplexSubscriptionBehavior do
+      @callback validate(term()) :: {:ok, term()} | {:error, term()}
+      # Many other callbacks for hypothetical future needs
+    end
+
+    defmodule SubscriptionRegistry do
+      # Complex registry for validators that aren't needed yet
+    end
+    ```
+
+- **Module Structure Limits**:
+
+  - Maximum 5 functions per module initially
+  - Maximum function length of 15 lines
+  - Maximum of 2 levels of function calls for any operation
+  - Prefer pure functions over processes when possible
+
+- **Process and State Management**:
+
+  - ✅ **DO**: Use the simplest process pattern that works
+
+    ```elixir
+    # Simple GenServer when needed
+    def init(args) do
+      {:ok, %{subscriptions: %{}, connection: nil}}
+    end
+
+    def handle_call({:subscribe, channel}, _from, state) do
+      with {:ok, sub_id} <- send_subscription(state.connection, channel) do
+        new_state = put_in(state.subscriptions[sub_id], channel)
+        {:reply, {:ok, sub_id}, new_state}
+      else
+        error -> {:reply, error, state}
+      end
+    end
+    ```
+
+  - ❌ **DON'T**: Create complex process hierarchies unnecessarily
+    ```elixir
+    # Unnecessary dynamic supervisor for a single process type
+    defmodule ComplexSubscriptionSupervisor do
+      use DynamicSupervisor
+      # Complex supervision strategy for a simple feature
+    end
+    ```
+
+- **Technology Selection Guidelines**:
+
+  - Use simple GenServers before ETS, ETS before Mnesia
+  - Limit LiveView component nesting to 2 levels maximum
+  - Default to function components over stateful LiveComponents
+  - If a feature can be implemented without a custom GenServer, do so
+
+- **Operational Efficiency Guidelines**:
+
+  - ✅ **DO**: Choose simplicity over elegance when it reduces operational costs
+
+    ```elixir
+    # Straightforward implementation with practical tradeoffs
+    def process_subscriptions(subscriptions) do
+      Enum.reduce(subscriptions, [], fn sub, acc ->
+        case update_subscription_status(sub) do
+          {:ok, updated} -> [updated | acc]
+          _ -> acc
+        end
+      end)
+      |> Enum.reverse()
+    end
+    ```
+
+  - ❌ **DON'T**: Create overly complex solutions for marginal benefits
+    ```elixir
+    # Unnecessarily complex parallelization without proven performance need
+    def process_subscriptions(subscriptions) do
+      subscriptions
+      |> Task.async_stream(fn sub ->
+          # Complex error handling and retry logic
+          # Unnecessary abstractions
+          update_subscription_with_retries(sub)
+        end,
+        timeout: 30_000,
+        on_timeout: :kill_task
+      )
+      |> Stream.filter(fn {:ok, res} -> match?({:ok, _}, res) end)
+      |> Stream.map(fn {:ok, {:ok, result}} -> result end)
+      |> Enum.to_list()
+    end
+    ```
+
+- **Anti-Patterns to Avoid**:
+  - No premature optimization without performance data
+  - No "just-in-case" code for hypothetical requirements
+  - No abstractions without at least 3 concrete usage examples
+  - No complex macros unless absolutely necessary
+  - No overly clever solutions that prioritize elegance over maintainability
+
+"The elegance comes from doing less, not more. Removing complexity, not adding it!"
+
+## WebSocket Connection Architecture
+
+- **Connection Model**:
+
+  - WebSocket connections are managed by the Adapter module using WebsockexNova
+  - Connection processes are supervised and monitored for failures
+  - Failures detected by `Process.monitor/1` and classified by exit reasons
+
+- **Reconnection API Requirements**:
+
+  - ✅ **DO**: Follow the established reconnection workflow
+
+    ```elixir
+    # Public API with reconnection capability
+    {:ok, client} = DeribitEx.Client.connect(client_id, client_secret, [
+      reconnect: [
+        auto_reconnect: true,
+        max_attempts: 5,
+        initial_delay: 1000,
+        on_reconnect: &handle_reconnect/1
+      ]
+    ])
+    ```
+
+  - ❌ **DON'T**: Implement custom reconnection logic outside the framework
+    ```elixir
+    # Don't create custom reconnection loops
+    def custom_reconnect(client_id, client_secret, options) do
+      case DeribitEx.Client.connect(client_id, client_secret, options) do
+        {:ok, client} -> {:ok, client}
+        {:error, _} ->
+          Process.sleep(1000)
+          custom_reconnect(client_id, client_secret, options)
+      end
+    end
+    ```
+
+- **Error Classification**:
+
+  - Deribit errors should be identified by pattern matching or by content
+  - Network errors should be distinguished from authentication/permission errors
+  - Error content must provide sufficient information for reconnection decisions
+
+- **Connection Testing Requirements**:
+
+  - Tests must reliably simulate network failures
+  - Tests must handle asynchronous reconnection processes
+  - Avoid fixed timing assumptions in tests
+
+  ```elixir
+  # Correct way to test reconnection
+  @tag :integration
+  test "reconnects automatically after network interruption", %{credentials: creds} do
+    {:ok, client} = DeribitEx.Client.connect(creds.client_id, creds.client_secret, [
+      reconnect: true
+    ])
+
+    # Verify initial connection works
+    assert {:ok, _} = DeribitEx.Client.get_time(client)
+
+    # Simulate network interruption
+    Process.exit(client.adapter_pid, :kill)
+
+    # Wait for reconnection
+    wait_for_reconnection(client)
+    assert {:ok, _} = DeribitEx.Client.get_time(client)
+  end
+  ```
+
+- **Subscription Management Architecture**
+
+  - **Subscription Execution**:
+
+    - Subscriptions must use the existing `DeribitEx.Client` module
+    - Subscription operations must emit telemetry events for monitoring
+    - Progress tracking callbacks should be supported
+
+  - **Error Handling**:
+    - Subscription errors must pass through raw error data without wrapping
+    - Use standard {:ok, result} | {:error, reason} pattern consistently
+    - Follow the "let it crash" philosophy for unexpected errors
+    - Permission and network errors must be distinguishable by error content
+    - Partial subscription failures must be cleanly handled
+
+- **Telemetry Integration**
+
+  - **Required Events**:
+
+    - All connections must emit `:deribit_ex, [:connection, :opened]` event
+    - All disconnections must emit `:deribit_ex, [:connection, :closed]` event
+    - All reconnection attempts must emit appropriate events
+    - Subscription operations must emit start/stop events
+
+  - **Testing Telemetry**:
+    - Tests should verify telemetry events
+    - Use `:telemetry_test` helpers in test environment
+
+## Error System Architecture
+
+- **Core Principles**:
+
+  - Pass raw errors without wrapping in custom structs
+  - Use consistent {:ok, result} | {:error, reason} pattern
+  - Apply "let it crash" philosophy for unexpected errors
+  - Add minimal context information only when necessary
+
+- **Error Handling Requirements**:
+
+  - ✅ **DO**: Use pattern matching on raw error data
+
+    ```elixir
+    def handle_error({:error, error}) do
+      # Take action based on the raw error pattern
+      case error do
+        {:timeout, duration, _} -> handle_timeout(duration)
+        {:rate_limit, details} -> handle_rate_limit(details)
+        _ -> {:error, :unknown_error}
+      end
+    end
+    ```
+
+  - ❌ **DON'T**: Create custom error transformation logic
+
+    ```elixir
+    # Don't create custom transformation logic
+    def handle_error({:error, error}) do
+      # This transforms errors unnecessarily
+      error_type = determine_error_type(error)
+      error_data = extract_error_data(error)
+
+      # Transforms errors inconsistently
+      case error_type do
+        :timeout -> handle_timeout(error_data)
+        :rate_limit -> handle_rate_limit(error_data)
+        _ -> {:error, :unknown_error}
+      end
+    end
+    ```
+
+- **Error Creation Guidelines**:
+
+  - Return original error data in {:error, reason} tuples
+  - Include relevant information directly in the error value
+  - Use consistent error formats across similar functions
+  - For expected errors, create clear error atoms or tuples with data
+
+- **Telemetry Integration**:
+  - Error events should include original error values
+  - Use consistent error metadata format in telemetry events
+  - Emit error events when errors are encountered
+
+## TaskList.md Format Specification
+
+```
+# DeribitEx Task List
+
+## Development Status Update (Month Year)
+### ✅ Recently Completed
+- **DE####**: [Task title] - [Brief description]
+- **DE####**: [Task title] - [Brief description]
+
+### 🚀 Next Up
+1. **DE####**: [Task title] ([Priority] Priority)
+2. **DE####**: [Task title] ([Priority] Priority)
+
+### 📊 Progress: [X]/[Y] tasks completed ([Z]%)
+
+## Integration Test Setup Notes
+[Brief integration testing reminders]
+
+## Simplicity Guidelines for All Tasks
+[Simplicity principles and requirements]
+
+## Current Tasks
+| ID     | Description                    | Status  | Priority | Assignee | Review Rating |
+| ------ | ------------------------------ | ------- | -------- | -------- | ------------- |
+| DE#### | [Task description]             | [Status]| [Priority]| [Assignee] |             |
+
+## Implementation Order
+[Ordered list of tasks with dependencies and explanations]
+
+## Completed Tasks
+| ID     | Description                    | Status    | Priority | Assignee | Review Rating |
+| ------ | ------------------------------ | --------- | -------- | -------- | ------------- |
+| DE#### | [Task description]             | Completed | [Priority]| [Assignee] | ⭐⭐⭐⭐⭐    |
+
+## Task Details
+
+### DE####: [Task Title] (✅ COMPLETED)
+**Description**: [Detailed task description]
+
+**Simplicity Progression Plan**:
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+4. [Step 4]
+
+**Simplicity Principle**:
+[Brief description of the simplicity principle applied]
+
+**Abstraction Evaluation**:
+- **Challenge**: [Question about necessary abstraction]
+- **Minimal Solution**: [Simplest viable solution]
+- **Justification**:
+  1. [Use case 1]
+  2. [Use case 2]
+  3. [Use case 3]
+
+**Requirements**:
+- [Requirement 1]
+- [Requirement 2]
+- [Requirement 3]
+
+**ExUnit Test Requirements**:
+- [Test requirement 1]
+- [Test requirement 2]
+- [Test requirement 3]
+
+**Integration Test Scenarios**:
+- [Test scenario 1]
+- [Test scenario 2]
+- [Test scenario 3]
+
+**Typespec Requirements**:
+- [Typespec requirement 1]
+- [Typespec requirement 2]
+- [Typespec requirement 3]
+
+**TypeSpec Documentation**:
+- [Documentation requirement 1]
+- [Documentation requirement 2]
+- [Documentation requirement 3]
+
+**TypeSpec Verification**:
+- [Verification step 1]
+- [Verification step 2]
+- [Verification step 3]
+
+**Error Handling**
+**Core Principles**
+- Pass raw errors
+- Use {:ok, result} | {:error, reason}
+- Let it crash
+
+**Error Implementation**
+- No wrapping
+- Minimal rescue
+- function/1 & /! versions
+
+**Error Examples**
+- Raw error passthrough
+- Simple rescue case
+- Supervisor handling
+
+**GenServer Specifics**
+- Handle_call/3 error pattern
+- Terminate/2 proper usage
+- Process linking considerations
+
+**Status**: [Status]
+**Priority**: [Priority]
+
+**Implementation Notes**:
+- [Implementation note 1]
+- [Implementation note 2]
+- [Implementation note 3]
+
+**Complexity Assessment**:
+- [Complexity assessment 1]
+- [Complexity assessment 2]
+- [Complexity assessment 3]
+
+**Maintenance Impact**:
+- [Maintenance impact 1]
+- [Maintenance impact 2]
+- [Maintenance impact 3]
+
+**Error Handling Implementation**:
+- [Error handling implementation 1]
+- [Error handling implementation 2]
+- [Error handling implementation 3]
+
+### DE####: [Task Title]
+[Same structure as above for current/planned tasks]
+
+## Implementation Notes
+[General implementation notes and guidelines for the entire project]
+```
+
+- **Required Fields and Values**
+
+  - **ID Format**: `DE####` (Regex: `DE\d{4}`)
+
+    - Core functionality: DE0001-DE0099
+    - Feature enhancements: DE0100-DE0199
+    - Documentation: DE0200-DE0299
+    - Testing: DE0300-DE0399
+
+  - **Status Values**:
+
+    - `Planned`
+    - `In Progress`
+    - `Review`
+    - `Completed`
+    - `Blocked`
+
+  - **Priority Values**:
+
+    - `Critical`
+    - `High`
+    - `Medium`
+    - `Low`
+
+  - **Review Rating**:
+    - Format: ⭐ stars (1-5) for visual representation
+    - Alternatively: decimal number between 1.0-5.0
+
+- **Task Section Requirements**
+
+  - Each task must have these sections:
+
+    1. `Description`
+    2. `Simplicity Progression Plan`
+    3. `Simplicity Principle`
+    4. `Abstraction Evaluation`
+    5. `Requirements`
+    6. `ExUnit Test Requirements`
+    7. `Integration Test Scenarios`
+    8. `Typespec Requirements`
+    9. `TypeSpec Documentation`
+    10. `TypeSpec Verification`
+    11. `Error Handling` (with subsections)
+    12. `Status`
+    13. `Priority`
+    14. Additional sections for completed tasks:
+        - `Implementation Notes`
+        - `Complexity Assessment`
+        - `Maintenance Impact`
+        - `Error Handling Implementation`
+
+  - **Simplicity Progression Plan Format**:
+
+    ```
+    **Simplicity Progression Plan**:
+    1. [Start with simplest implementation]
+    2. [Add essential functionality]
+    3. [Build more advanced features]
+    4. [Implement comprehensive capabilities]
+    ```
+
+  - **Abstraction Evaluation Format**:
+    ```
+    **Abstraction Evaluation**:
+    - **Challenge**: [Question about necessary abstraction]
+    - **Minimal Solution**: [Simplest viable solution]
+    - **Justification**: [Numbered list of concrete use cases]
+      1. [Use case 1]
+      2. [Use case 2]
+      3. [Use case 3]
+    ```
+
+  - **Error Handling Format**:
+    ```
+    **Error Handling**
+    **Core Principles**
+    - Pass raw errors
+    - Use {:ok, result} | {:error, reason}
+    - Let it crash
+
+    **Error Implementation**
+    - No wrapping
+    - Minimal rescue
+    - function/1 & /! versions
+
+    **Error Examples**
+    - Raw error passthrough
+    - Simple rescue case
+    - Supervisor handling
+
+    **GenServer Specifics**
+    - Handle_call/3 error pattern
+    - Terminate/2 proper usage
+    - Process linking considerations
+    ```
+
+- **Validation Rules**
+  - All task IDs must be unique
+  - All current tasks must have detailed entries
+  - Completed tasks must have implementation notes and review ratings
+  - All sections must use correct heading levels:
+    - `#` for document title
+    - `##` for major sections
+    - `###` for tasks
+  - Tasks must follow the specified format for all required sections
+  - Status and priority values must be from the approved list

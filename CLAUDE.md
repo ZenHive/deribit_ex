@@ -168,3 +168,95 @@ The library emits telemetry events throughout its operation. Key events include:
    - `:cautious` - Strict limits to avoid 429s completely
    - `:normal` - Balanced approach (default)
    - `:aggressive` - Higher throughput, might get occasional 429s
+
+## Code Quality Standards
+
+### Documentation Guidelines
+
+- **Module Documentation**: Use concise, structured `@moduledoc` with clear bullet points for key components
+- **Function Documentation**: Optimize `@doc` blocks with a single-sentence summary followed by structured details
+- **Code Organization**: Optimize code structure for both machine and human comprehension
+
+Example of optimized documentation:
+```elixir
+@moduledoc """
+Provides real-time WebSocket communication with Deribit exchange.
+
+- Handles authentication and token management
+- Manages subscriptions and message routing  
+- Emits telemetry for monitoring and debugging
+- Supports automatic reconnection and resubscription
+"""
+
+@doc """
+Subscribes to market data for the specified instrument.
+
+Accepts options for depth and update frequency.
+"""
+```
+
+### Code Structure Standards
+
+- All public functions must have `@spec` annotations
+- All modules must have `@moduledoc` documentation
+- Follow functional, declarative style with pattern matching
+- Use tagged tuples for consistent error handling: `{:ok, result}` or `{:error, reason}`
+- Pass all static checks: `mix format`, `mix credo --strict`, `mix dialyzer`
+
+### Error Handling Principles
+
+- Pass raw errors without wrapping in custom structs
+- Use consistent `{:ok, result} | {:error, reason}` pattern
+- Apply "let it crash" philosophy for unexpected errors
+- Add minimal context information only when necessary
+
+### Simplicity Guidelines
+
+- Implement the minimal viable solution first
+- Each component has a limited "complexity budget"
+- Create abstractions only with proven value (≥3 concrete examples)
+- Maximum 5 functions per module initially
+- Maximum function length of 15 lines
+- Prefer pure functions over processes when possible
+
+## Integration Testing Requirements
+
+### Core Principles
+
+- Test with REAL Deribit APIs (NO mocks for API responses)
+- Verify end-to-end functionality across component boundaries
+- Test behavior under realistic conditions (network latency, market volatility)
+- Document all test scenarios thoroughly
+
+### Test Environment Setup
+
+- Use Deribit testnet for realistic testing
+- Tag integration tests with `@tag :integration`
+- Create helper modules in `test/support/integration/` for setup
+- Ensure tests run both locally and in CI
+
+### Required Test Scenarios
+
+- Happy path functionality (subscriptions, requests, authentication)
+- Error cases with real error conditions (rate limits, invalid credentials)
+- Edge cases (network interruptions, token expiration, reconnection)
+- Concurrent operations and their interactions
+
+Example integration test structure:
+```elixir
+@tag :integration
+test "reconnects automatically after network interruption", %{credentials: creds} do
+  # 1. Connect to real Deribit API
+  {:ok, client} = DeribitEx.Client.connect(creds.client_id, creds.client_secret)
+  
+  # 2. Verify initial connection works
+  assert {:ok, _} = DeribitEx.Client.get_time(client)
+  
+  # 3. Simulate network interruption
+  Process.exit(client.adapter_pid, :kill)
+  
+  # 4. Verify automatic reconnection
+  wait_for_reconnection(client)
+  assert {:ok, _} = DeribitEx.Client.get_time(client)
+end
+```

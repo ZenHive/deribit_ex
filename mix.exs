@@ -42,7 +42,7 @@ defmodule DeribitEx.MixProject do
 
   defp deps do
     [
-      {:websockex_nova, "~> 0.1", path: "../websockex_nova"},
+      {:websockex_nova, "~> 0.1.1"},
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.2"},
 
